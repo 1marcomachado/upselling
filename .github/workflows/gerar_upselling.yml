@@ -2,23 +2,33 @@ name: Gerar upselling diário
 
 on:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 6 * * *"  # todos os dias às 6h UTC
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Clonar repositório
-        uses: actions/checkout@v3
-      - name: Instalar Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Instalar dependências
-        run: |
-          pip install torch torchvision scikit-learn python-dotenv Pillow requests gitpython
-      - name: Correr script upselling
-        run: python gerador_upselling_json.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Clonar repositório
+      uses: actions/checkout@v3
+
+    - name: Instalar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Instalar dependências
+      run: |
+        pip install requests python-dotenv
+
+    - name: Executar script Python
+      run: python gerar_json.py
+
+    - name: Fazer commit e push do JSON
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@users.noreply.github.com'
+        git add produtos_upselling.json
+        git commit -m "🤖 Atualizar JSON de upselling automático" || echo "Nada a commitar"
+        git push
