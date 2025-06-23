@@ -48,7 +48,10 @@ def get_image_embedding(img_url, image_path):
 
 # Ler XML
 print("🔽 A descarregar XML...")
-r = requests.get(xml_url)
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+}
+r = requests.get(xml_url, headers=headers, timeout=20)
 tree = ET.ElementTree(ET.fromstring(r.content))
 root = tree.getroot()
 ns = {'g': 'http://base.google.com/ns/1.0', 'atom': 'http://www.w3.org/2005/Atom'}
