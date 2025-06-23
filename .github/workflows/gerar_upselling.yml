@@ -1,0 +1,24 @@
+name: Gerar upselling diário
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v3
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Instalar dependências
+        run: |
+          pip install torch torchvision scikit-learn python-dotenv Pillow requests gitpython
+      - name: Correr script upselling
+        run: python gerador_upselling_json.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
