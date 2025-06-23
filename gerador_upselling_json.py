@@ -1,0 +1,1 @@
+# Script principal de geração de upselling (conteúdo original aqui)
