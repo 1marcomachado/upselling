@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import os
 from io import BytesIO
 from PIL import Image
@@ -25,8 +27,18 @@ categorias_complementares = {
     "Chinelos": ["Óculos de Natação", "Toucas"],
 }
 
+xml_url = "https://www.bzronline.com/extend/catalog_24.xml"
+
+session = requests.Session()
+session.headers.update({"User-Agent": "Mozilla/5.0"})
+
+retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
+session.mount("https://", HTTPAdapter(max_retries=retries))
+
 print("🔽 A descarregar XML...")
-r = requests.get(xml_url)
+r = session.get(xml_url, timeout=30)
+r.raise_for_status()  # Garante que falha se erro HTTP
+xml_content = r.content
 tree = ET.ElementTree(ET.fromstring(r.content))
 root = tree.getroot()
 
