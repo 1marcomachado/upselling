@@ -62,10 +62,14 @@ for entry in root.findall('atom:entry', ns):
     site = entry.find('g:site', ns).text if entry.find('g:site', ns) is not None else ""
     gender = entry.find('g:gender', ns).text if entry.find('g:gender', ns) is not None else ""
     pack = entry.find('g:pack', ns).text if entry.find('g:pack', ns) is not None else ""
+    price = entry.find('g:price', ns).text if entry.find('g:price', ns) is not None else ""
+    sale_price = entry.find('g:sale_price', ns).text if entry.find('g:sale_price', ns) is not None else ""
 
     produtos.append({
         "id": id_,
         "title": title,
+        "price": price,
+        "sale_price": sale_price,
         "category": category,
         "brand": brand,
         "image_link": image_link,
@@ -186,6 +190,8 @@ for produto in produtos_validos:
         "site": produto["site"],
         "category": produto["category"],
         "brand": produto["brand"],
+        "price": produto.get("price", ""),
+        "sale_price": produto.get("sale_price", ""),
         "sugestoes": sugestoes_dict.get(produto["id"], [])
     })
 
