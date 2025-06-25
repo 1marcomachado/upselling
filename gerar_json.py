@@ -13,7 +13,15 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 import json
 from datetime import datetime
+import base64
+from dotenv import load_dotenv
 
+load_dotenv()
+token = os.getenv("GITHUB_TOKEN")
+repo = os.getenv("GITHUB_REPO")
+branch = "main"
+filename = "upselling_final.json"
+api_url = f"https://api.github.com/repos/{repo}/contents/{filename}"
 xml_url = "https://www.bzronline.com/extend/catalog_24.xml"
 image_folder = "imagens"
 os.makedirs(image_folder, exist_ok=True)
@@ -190,3 +198,32 @@ with open("upselling_final.json", "w", encoding="utf-8") as f:
     json.dump(saida_json_final, f, ensure_ascii=False, indent=2)
 
 print("✅ JSON final criado: upselling_final.json")
+
+# 1. Lê conteúdo atual (para obter sha)
+headers = {
+    "Authorization": f"token {token}",
+    "Accept": "application/vnd.github.v3+json"
+}
+
+get_resp = requests.get(api_url, headers=headers)
+sha = get_resp.json().get("sha") if get_resp.status_code == 200 else None
+
+# 2. Prepara conteúdo base64
+with open(filename, "rb") as f:
+    content = base64.b64encode(f.read()).decode()
+
+payload = {
+    "message": "Atualizar upselling JSON",
+    "content": content,
+    "branch": branch
+}
+if sha:
+    payload["sha"] = sha
+
+# 3. Faz o PUT
+put_resp = requests.put(api_url, headers=headers, json=payload)
+
+if put_resp.status_code in [200, 201]:
+    print("✅ JSON copiado para o GitHub com sucesso.")
+else:
+    print("❌ Erro ao enviar para o GitHub:", put_resp.json())
