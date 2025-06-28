@@ -253,3 +253,30 @@ if put_resp.status_code in [200, 201]:
     print("✅ JSON copiado para o GitHub com sucesso.")
 else:
     print("❌ Erro ao enviar para o GitHub:", put_resp.json())
+
+# Upload do log de produtos sem sugestões
+log_filename = "produtos_sem_sugestoes.json"
+log_api_url = f"https://api.github.com/repos/{repo}/contents/{log_filename}"
+
+with open(log_filename, "rb") as f:
+    log_content = base64.b64encode(f.read()).decode()
+
+# Lê SHA atual do log se existir
+log_get_resp = requests.get(log_api_url, headers=headers)
+log_sha = log_get_resp.json().get("sha") if log_get_resp.status_code == 200 else None
+
+log_payload = {
+    "message": "Atualizar log de produtos sem sugestões",
+    "content": log_content,
+    "branch": branch
+}
+if log_sha:
+    log_payload["sha"] = log_sha
+
+log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload)
+
+if log_put_resp.status_code in [200, 201]:
+    print("✅ Log de produtos sem sugestões enviado para o GitHub.")
+else:
+    print("❌ Erro ao enviar log para o GitHub:", log_put_resp.json())
+
