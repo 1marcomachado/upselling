@@ -1,0 +1,60 @@
+{
+  "Roupa > Natação > Fatos de Competição": [
+    "Acessórios > Natação > Toucas",
+    "Acessórios > Natação > Óculos de Natação",
+    "Calçado > Natação > Chinelos",
+    "Calçado > Natação > Sapatos"
+  ],
+  "Roupa > Natação > Calções de Competição": [
+    "Acessórios > Natação > Toucas",
+    "Acessórios > Natação > Óculos de Natação",
+    "Calçado > Natação > Chinelos",
+    "Calçado > Natação > Sapatos"
+  ],
+  "Roupa > Natação > Fatos de Banho": [
+    "Acessórios > Natação > Toucas",
+    "Acessórios > Natação > Óculos de Natação",
+    "Calçado > Natação > Chinelos",
+    "Calçado > Natação > Sapatos"
+  ],
+  "Roupa > Natação > Calções de Natação": [
+    "Acessórios > Natação > Toucas",
+    "Acessórios > Natação > Óculos de Natação",
+    "Calçado > Natação > Chinelos",
+    "Calçado > Natação > Sapatos"
+  ],
+  "Calçado > Natação > Chinelos": [
+    "Acessórios > Natação > Óculos de Natação",
+    "Roupa > Natação > Calções de Competição",
+    "Roupa > Natação > Calções de Natação",
+    "Roupa > Natação > Fatos de Banho",
+    "Roupa > Natação > Fatos de Competição"
+  ],
+  "Calçado > Natação > Sapatos": [
+    "Acessórios > Natação > Óculos de Natação",
+    "Roupa > Natação > Calções de Competição",
+    "Roupa > Natação > Calções de Natação",
+    "Roupa > Natação > Fatos de Banho",
+    "Roupa > Natação > Fatos de Competição"
+  ],
+  "Acessórios > Natação > Óculos de Natação": [
+    "Acessórios > Natação > Toucas",
+    "Calçado > Natação > Chinelos",
+    "Calçado > Natação > Sapatos",
+    "Roupa > Natação > Calções de Competição",
+    "Roupa > Natação > Calções de Natação",
+    "Roupa > Natação > Fatos de Banho",
+    "Roupa > Natação > Fatos de Competição"
+  ],
+  "Roupa > T-Shirts": [
+    "Calçado > Sapatilhas",
+    "Roupa > Calções"
+  ],
+  "Roupa > Calças de Ganga": [
+    "Roupa > T-Shirts"
+  ],
+  "Roupa > Vestidos": [
+    "Acessórios > Mochilas",
+    "Calçado > Sandálias"
+  ]
+}
