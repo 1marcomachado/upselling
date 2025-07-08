@@ -53,6 +53,7 @@ produtos = []
 
 for entry in root.findall('atom:entry', ns):
     id_ = entry.find('g:id', ns).text if entry.find('g:id', ns) is not None else ""
+    mpn = entry.find('g:mpn', ns).text if entry.find('g:mpn', ns) is not None else ""
     title = entry.find('g:title', ns).text.strip() if entry.find('g:title', ns) is not None else ""
     category = entry.find('g:category', ns).text if entry.find('g:category', ns) is not None else ""
     brand = entry.find('g:brand', ns).text.strip() if entry.find('g:brand', ns) is not None else ""
@@ -65,6 +66,7 @@ for entry in root.findall('atom:entry', ns):
 
     produtos.append({
         "id": id_,
+        "mpn": mpn,
         "title": title,
         "price": price,
         "sale_price": sale_price,
@@ -188,6 +190,7 @@ for i, produto in enumerate(produtos_validos):
     else:
         produtos_sem_sugestoes.append({
             "id": produto["id"],
+            "mpn": produto["mpn"],
             "title": produto["title"],
             "category": produto["category"],
             "brand": produto["brand"],
@@ -202,6 +205,7 @@ saida_json = []
 for produto in produtos_validos:
     saida_json.append({
         "id": produto["id"],
+        "mpn": produto["mpn"],
         "title": produto["title"],
         "image": produto["image_link"],
         "gender": produto["gender"],
