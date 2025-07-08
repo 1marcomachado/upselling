@@ -26,14 +26,8 @@ xml_url = "https://www.bzronline.com/extend/catalog_24.xml"
 image_folder = "imagens"
 os.makedirs(image_folder, exist_ok=True)
 
-categorias_complementares = {
-    "T-shirts": ["Calções", "Hoodies"],
-    "Calções": ["T-shirts", "Hoodies"],
-    "Hoodies": ["T-shirts", "Calções"],
-    "Calças": ["Camisolas", "Polos", "T-shirts"],
-    "Óculos de Natação": ["Chinelos", "Toucas"],
-    "Chinelos": ["Óculos de Natação", "Toucas"],
-}
+with open("categorias_complementares.json", "r", encoding="utf-8") as f:
+    categorias_complementares = json.load(f)
 
 session = requests.Session()
 session.headers.update({"User-Agent": "Mozilla/5.0"})
