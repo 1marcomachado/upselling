@@ -31,7 +31,6 @@ with open("categorias_complementares.json", "r", encoding="utf-8") as f:
 
 session = requests.Session()
 session.headers.update({"User-Agent": "Mozilla/5.0"})
-
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
 session.mount("https://", HTTPAdapter(max_retries=retries))
 
@@ -41,7 +40,6 @@ r.raise_for_status()
 xml_content = r.content
 tree = ET.ElementTree(ET.fromstring(xml_content))
 root = tree.getroot()
-
 ns = {'g': 'http://base.google.com/ns/1.0', 'atom': 'http://www.w3.org/2005/Atom'}
 produtos = []
 
@@ -140,41 +138,55 @@ produtos_sem_sugestoes = []
 
 for i, produto in enumerate(produtos_validos):
     last_level_base = produto["category"].split(">")[-1].strip()
-    second_level_base = produto["category"].split(">")[1].strip() if len(produto["category"].split(">")) > 1 else ""
+    second_level_base = (
+        produto["category"].split(">")[1].strip()
+        if len(produto["category"].split(">")) > 1 else ""
+    )
 
-    candidatos = [j for j, p in enumerate(produtos_validos)
-                   if p["site"] == produto["site"] and
-                      p["brand"] == produto["brand"] and
-                      p["gender"] == produto["gender"] and
-                      p["id"] != produto["id"]]
+    # Filtros base SEMPRE
+    candidatos = [
+        j for j, p in enumerate(produtos_validos)
+        if p["site"] == produto["site"] and
+           p["brand"] == produto["brand"] and
+           p["gender"] == produto["gender"] and
+           p["id"] != produto["id"]
+    ]
 
     motivo = None
 
-    if produto["site"] == "2":
-        if produto["pack"]:
-            candidatos = [j for j in candidatos if produtos_validos[j]["pack"] == produto["pack"]]
-            if not candidatos:
-                motivo = "Sem candidatos com o mesmo pack"
-        elif second_level_base:
-            candidatos = [j for j in candidatos
-                           if len(produtos_validos[j]["category"].split(">")) > 1 and
-                              produtos_validos[j]["category"].split(">")[1].strip() == second_level_base and
-                              produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base]
-            if not candidatos:
-                motivo = "Sem candidatos com o mesmo segundo nível de categoria"
+    # 1º: categorias complementares
+    if last_level_base in categorias_complementares:
+        categorias_validas = categorias_complementares[last_level_base]
+        candidatos = [
+            j for j in candidatos
+            if produtos_validos[j]["category"].split(">")[-1].strip() in categorias_validas
+        ]
+        if not candidatos:
+            motivo = f"Sem candidatos nas categorias complementares para '{last_level_base}'"
+    else:
+        # 2º: regras alternativas
+        if produto["site"] == "2":
+            if produto["pack"]:
+                candidatos = [j for j in candidatos if produtos_validos[j]["pack"] == produto["pack"]]
+                if not candidatos:
+                    motivo = "Sem candidatos com o mesmo pack"
+            elif second_level_base:
+                candidatos = [
+                    j for j in candidatos
+                    if len(produtos_validos[j]["category"].split(">")) > 1 and
+                       produtos_validos[j]["category"].split(">")[1].strip() == second_level_base and
+                       produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base
+                ]
+                if not candidatos:
+                    motivo = "Sem candidatos com o mesmo segundo nível de categoria"
+            else:
+                candidatos = [j for j in candidatos if produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base]
+                if not candidatos:
+                    motivo = "Sem candidatos com categoria diferente"
         else:
             candidatos = [j for j in candidatos if produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base]
             if not candidatos:
-                motivo = "Sem candidatos com categoria diferente"
-    else:
-        candidatos = [j for j in candidatos if produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base]
-        if not candidatos:
-            motivo = "Sem candidatos com categoria diferente (site ≠ 2)"
-
-    if last_level_base in categorias_complementares:
-        candidatos = [j for j in candidatos if produtos_validos[j]["category"].split(">")[-1].strip() in categorias_complementares[last_level_base]]
-        if not candidatos:
-            motivo = f"Sem candidatos nas categorias complementares para '{last_level_base}'"
+                motivo = "Sem candidatos com categoria diferente (site ≠ 2)"
 
     if candidatos:
         sim_scores = similarity_matrix[i][candidatos]
@@ -194,7 +206,7 @@ for i, produto in enumerate(produtos_validos):
             "motivo": motivo or "Nenhum candidato válido encontrado"
         })
 
-# Grava JSON principal
+# Grava JSON final
 saida_json = []
 for produto in produtos_validos:
     saida_json.append({
@@ -252,14 +264,13 @@ if put_resp.status_code in [200, 201]:
 else:
     print("❌ Erro ao enviar para o GitHub:", put_resp.json())
 
-# Upload do log de produtos sem sugestões
+# Upload do log
 log_filename = "produtos_sem_sugestoes.json"
 log_api_url = f"https://api.github.com/repos/{repo}/contents/{log_filename}"
 
 with open(log_filename, "rb") as f:
     log_content = base64.b64encode(f.read()).decode()
 
-# Lê SHA atual do log se existir
 log_get_resp = requests.get(log_api_url, headers=headers)
 log_sha = log_get_resp.json().get("sha") if log_get_resp.status_code == 200 else None
 
@@ -277,4 +288,3 @@ if log_put_resp.status_code in [200, 201]:
     print("✅ Log de produtos sem sugestões enviado para o GitHub.")
 else:
     print("❌ Erro ao enviar log para o GitHub:", log_put_resp.json())
-
