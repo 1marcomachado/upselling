@@ -178,7 +178,7 @@ for i, produto in enumerate(produtos_validos):
 
     if candidatos:
         sim_scores = similarity_matrix[i][candidatos]
-        indices_ordenados = np.argsort(sim_scores)[::-1][:10]
+        indices_ordenados = np.argsort(sim_scores)[::-1][:16]
         sugestoes = [produtos_validos[candidatos[j]]["id"] for j in indices_ordenados]
         sugestoes_dict[produto["id"]] = sugestoes
     else:
