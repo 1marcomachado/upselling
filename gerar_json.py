@@ -15,7 +15,9 @@ import json
 from datetime import datetime
 import base64
 from dotenv import load_dotenv
+from collections import defaultdict
 
+# 🔐 Carregar variáveis de ambiente
 load_dotenv()
 token = os.getenv("GITHUB_TOKEN")
 repo = os.getenv("GITHUB_REPO")
@@ -26,14 +28,17 @@ xml_url = "https://www.bzronline.com/extend/catalog_24.xml"
 image_folder = "imagens"
 os.makedirs(image_folder, exist_ok=True)
 
+# 📁 Categorias complementares
 with open("categorias_complementares.json", "r", encoding="utf-8") as f:
     categorias_complementares = json.load(f)
 
+# 🌐 Sessão com retry
 session = requests.Session()
 session.headers.update({"User-Agent": "Mozilla/5.0"})
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
 session.mount("https://", HTTPAdapter(max_retries=retries))
 
+# 🔽 Descarregar XML
 print("🔽 A descarregar XML...")
 r = session.get(xml_url, timeout=30)
 r.raise_for_status()
@@ -41,8 +46,9 @@ xml_content = r.content
 tree = ET.ElementTree(ET.fromstring(xml_content))
 root = tree.getroot()
 ns = {'g': 'http://base.google.com/ns/1.0', 'atom': 'http://www.w3.org/2005/Atom'}
-produtos = []
 
+# 📦 Parse produtos
+produtos = []
 for entry in root.findall('atom:entry', ns):
     id_ = entry.find('g:id', ns).text if entry.find('g:id', ns) is not None else ""
     mpn = entry.find('g:mpn', ns).text if entry.find('g:mpn', ns) is not None else ""
@@ -55,6 +61,8 @@ for entry in root.findall('atom:entry', ns):
     pack = entry.find('g:pack', ns).text if entry.find('g:pack', ns) is not None else ""
     price = entry.find('g:price', ns).text if entry.find('g:price', ns) is not None else ""
     sale_price = entry.find('g:sale_price', ns).text if entry.find('g:sale_price', ns) is not None else ""
+    size = entry.find('g:size', ns).text if entry.find('g:size', ns) is not None else ""
+    availability = entry.find('g:availability', ns).text if entry.find('g:availability', ns) is not None else ""
 
     produtos.append({
         "id": id_,
@@ -67,13 +75,15 @@ for entry in root.findall('atom:entry', ns):
         "image_link": image_link,
         "site": site,
         "gender": gender,
-        "pack": pack
+        "pack": pack,
+        "size": size,
+        "availability": availability
     })
 
+# 🧠 Modelo ResNet50
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
 model.eval().to(device)
-
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -81,11 +91,12 @@ transform = transforms.Compose([
                          std=[0.229, 0.224, 0.225])
 ])
 
+# 📸 Função de embedding de imagem
 def get_image_embedding(img_url, image_path):
     if os.path.exists(image_path):
         img = Image.open(image_path).convert('RGB')
     else:
-        headers = { "User-Agent": "Mozilla/5.0" }
+        headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.get(img_url, headers=headers, timeout=10)
         if "image" not in response.headers.get("Content-Type", ""):
             print(f"❌ Ignorado (não é imagem): {img_url}")
@@ -97,116 +108,108 @@ def get_image_embedding(img_url, image_path):
         features = model(img)
     return features.cpu().numpy().flatten()
 
+# 🧠 Preparar embeddings com cache
 print("🧠 A preparar embeddings com cache...")
 embeddings_file = "embeddings.npy"
-ids_file = "ids_embeddings.json"
+mpns_file = "mpns_embeddings.json"
 
-if os.path.exists(embeddings_file) and os.path.exists(ids_file):
+if os.path.exists(embeddings_file) and os.path.exists(mpns_file):
     embeddings = np.load(embeddings_file)
-    with open(ids_file, "r", encoding="utf-8") as f:
-        ids_existentes = json.load(f)
+    with open(mpns_file, "r", encoding="utf-8") as f:
+        mpns_existentes = json.load(f)
 else:
     embeddings = []
-    ids_existentes = []
+    mpns_existentes = []
 
 produtos_validos = []
 novos_embeddings = []
+mpns_adicionados = set(mpns_existentes)
 
 for p in produtos:
-    if p["id"] in ids_existentes:
+    if not p["mpn"]:
+        continue
+    if p["mpn"] in mpns_adicionados:
         produtos_validos.append(p)
         continue
-    image_filename = f"{p['id']}.jpg"
+    image_filename = f"{p['mpn']}.jpg"
     image_path = os.path.join(image_folder, image_filename)
     emb = get_image_embedding(p["image_link"], image_path)
     if emb is not None:
         novos_embeddings.append(emb)
         produtos_validos.append(p)
-        ids_existentes.append(p["id"])
+        mpns_adicionados.add(p["mpn"])
 
 if novos_embeddings:
     embeddings = np.vstack((embeddings, novos_embeddings)) if len(embeddings) else np.array(novos_embeddings)
     np.save(embeddings_file, embeddings)
-    with open(ids_file, "w", encoding="utf-8") as f:
-        json.dump(ids_existentes, f, ensure_ascii=False, indent=2)
+    with open(mpns_file, "w", encoding="utf-8") as f:
+        json.dump(list(mpns_adicionados), f, ensure_ascii=False, indent=2)
 
+# 🔎 Similaridade por mpn
 print("📊 A calcular similaridades...")
-similarity_matrix = cosine_similarity(embeddings)
+mpn_to_embedding = {}
+mpn_to_produto = {}
+for i, p in enumerate(produtos_validos):
+    mpn = p["mpn"]
+    if mpn not in mpn_to_embedding:
+        mpn_to_embedding[mpn] = embeddings[i]
+        mpn_to_produto[mpn] = p
 
+mpn_list = list(mpn_to_embedding.keys())
+mpn_embeddings = np.array([mpn_to_embedding[m] for m in mpn_list])
+similarity_matrix = cosine_similarity(mpn_embeddings)
+
+# 🔄 Construir sugestões
 sugestoes_dict = {}
 produtos_sem_sugestoes = []
+for p in produtos_validos:
+    base_mpn = p["mpn"]
+    if base_mpn not in mpn_to_embedding:
+        continue
+    i = mpn_list.index(base_mpn)
+    last_level_base = p["category"].split(">")[-1].strip()
+    second_level_base = p["category"].split(">")[1].strip() if len(p["category"].split(">")) > 1 else ""
 
-for i, produto in enumerate(produtos_validos):
-    last_level_base = produto["category"].split(">")[-1].strip()
-    second_level_base = (
-        produto["category"].split(">")[1].strip()
-        if len(produto["category"].split(">")) > 1 else ""
-    )
-
-    # Filtros base SEMPRE
     candidatos = [
-        j for j, p in enumerate(produtos_validos)
-        if p["site"] == produto["site"] and
-           p["brand"] == produto["brand"] and
-           p["gender"] == produto["gender"] and
-           p["id"] != produto["id"]
+        j for j, mpn_cand in enumerate(mpn_list)
+        if mpn_cand != base_mpn and
+           mpn_to_produto[mpn_cand]["site"] == p["site"] and
+           mpn_to_produto[mpn_cand]["brand"] == p["brand"] and
+           mpn_to_produto[mpn_cand]["gender"] == p["gender"]
     ]
 
-    motivo = None
-
-    # 1º: categorias complementares
     if last_level_base in categorias_complementares:
         categorias_validas = categorias_complementares[last_level_base]
-        candidatos = [
-            j for j in candidatos
-            if produtos_validos[j]["category"].split(">")[-1].strip() in categorias_validas
-        ]
-        if not candidatos:
-            motivo = f"Sem candidatos nas categorias complementares para '{last_level_base}'"
-    else:
-        # 2º: regras alternativas
-        if produto["site"] == "2":
-            if produto["pack"]:
-                candidatos = [j for j in candidatos if produtos_validos[j]["pack"] == produto["pack"]]
-                if not candidatos:
-                    motivo = "Sem candidatos com o mesmo pack"
-            elif second_level_base:
-                candidatos = [
-                    j for j in candidatos
-                    if len(produtos_validos[j]["category"].split(">")) > 1 and
-                       produtos_validos[j]["category"].split(">")[1].strip() == second_level_base and
-                       produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base
-                ]
-                if not candidatos:
-                    motivo = "Sem candidatos com o mesmo segundo nível de categoria"
-            else:
-                candidatos = [j for j in candidatos if produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base]
-                if not candidatos:
-                    motivo = "Sem candidatos com categoria diferente"
-        else:
-            candidatos = [j for j in candidatos if produtos_validos[j]["category"].split(">")[-1].strip() != last_level_base]
-            if not candidatos:
-                motivo = "Sem candidatos com categoria diferente (site ≠ 2)"
+        candidatos = [j for j in candidatos if mpn_to_produto[mpn_list[j]]["category"].split(">")[-1].strip() in categorias_validas]
 
     if candidatos:
-        sim_scores = similarity_matrix[i][candidatos]
-        indices_ordenados = np.argsort(sim_scores)[::-1][:16]
-        sugestoes = [produtos_validos[candidatos[j]]["id"] for j in indices_ordenados]
-        sugestoes_dict[produto["id"]] = sugestoes
+        scores = similarity_matrix[i][candidatos]
+        indices_ordenados = np.argsort(scores)[::-1][:16]
+        sugestoes = [mpn_list[candidatos[k]] for k in indices_ordenados]
+        sugestoes_dict[p["id"]] = sugestoes
     else:
         produtos_sem_sugestoes.append({
-            "id": produto["id"],
-            "mpn": produto["mpn"],
-            "title": produto["title"],
-            "category": produto["category"],
-            "brand": produto["brand"],
-            "site": produto["site"],
-            "gender": produto["gender"],
-            "pack": produto["pack"],
-            "motivo": motivo or "Nenhum candidato válido encontrado"
+            "id": p["id"],
+            "mpn": p["mpn"],
+            "title": p["title"],
+            "category": p["category"],
+            "brand": p["brand"],
+            "site": p["site"],
+            "gender": p["gender"],
+            "pack": p["pack"],
+            "motivo": "Sem sugestões visuais válidas"
         })
 
-# Grava JSON final
+# 👕 Agrupar variantes por mpn
+mpn_variantes = defaultdict(list)
+for p in produtos_validos:
+    mpn_variantes[p["mpn"]].append({
+        "id": p["id"],
+        "size": p["size"],
+        "availability": p["availability"]
+    })
+
+# 📝 Gerar JSON final
 saida_json = []
 for produto in produtos_validos:
     saida_json.append({
@@ -220,6 +223,7 @@ for produto in produtos_validos:
         "brand": produto["brand"],
         "price": produto.get("price", ""),
         "sale_price": produto.get("sale_price", ""),
+        "variantes": mpn_variantes.get(produto["mpn"], []),
         "sugestoes": sugestoes_dict.get(produto["id"], [])
     })
 
@@ -237,18 +241,17 @@ with open("produtos_sem_sugestoes.json", "w", encoding="utf-8") as f:
 print("✅ JSON final criado: upselling_final.json")
 print("📁 Log criado: produtos_sem_sugestoes.json")
 
-# Upload para GitHub
+# 📤 Upload para GitHub
 headers = {
     "Authorization": f"token {token}",
     "Accept": "application/vnd.github.v3+json"
 }
 
+# JSON principal
 get_resp = requests.get(api_url, headers=headers)
 sha = get_resp.json().get("sha") if get_resp.status_code == 200 else None
-
 with open(filename, "rb") as f:
     content = base64.b64encode(f.read()).decode()
-
 payload = {
     "message": "Atualizar upselling JSON",
     "content": content,
@@ -256,24 +259,19 @@ payload = {
 }
 if sha:
     payload["sha"] = sha
-
 put_resp = requests.put(api_url, headers=headers, json=payload)
-
 if put_resp.status_code in [200, 201]:
     print("✅ JSON copiado para o GitHub com sucesso.")
 else:
     print("❌ Erro ao enviar para o GitHub:", put_resp.json())
 
-# Upload do log
+# Log
 log_filename = "produtos_sem_sugestoes.json"
 log_api_url = f"https://api.github.com/repos/{repo}/contents/{log_filename}"
-
 with open(log_filename, "rb") as f:
     log_content = base64.b64encode(f.read()).decode()
-
 log_get_resp = requests.get(log_api_url, headers=headers)
 log_sha = log_get_resp.json().get("sha") if log_get_resp.status_code == 200 else None
-
 log_payload = {
     "message": "Atualizar log de produtos sem sugestões",
     "content": log_content,
@@ -281,9 +279,7 @@ log_payload = {
 }
 if log_sha:
     log_payload["sha"] = log_sha
-
 log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload)
-
 if log_put_resp.status_code in [200, 201]:
     print("✅ Log de produtos sem sugestões enviado para o GitHub.")
 else:
