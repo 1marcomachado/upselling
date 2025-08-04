@@ -209,12 +209,24 @@ for p in produtos_validos:
         "availability": p["availability"]
     })
 
-# 📝 Gerar JSON final
+# 📝 Gerar JSON final (1 entrada por MPN com variantes agrupadas)
 saida_json = []
+vistos = set()
+
 for produto in produtos_validos:
+    mpn = produto["mpn"]
+    if mpn in vistos:
+        continue
+    vistos.add(mpn)
+
+    variantes = mpn_variantes.get(mpn, [])
+    
+    # Escolher ID base preferencialmente com stock
+    id_base = next((v["id"] for v in variantes if v["availability"] == "in stock"), variantes[0]["id"])
+    
     saida_json.append({
-        "id": produto["id"],
-        "mpn": produto["mpn"],
+        "id": id_base,
+        "mpn": mpn,
         "title": produto["title"],
         "image": produto["image_link"],
         "gender": produto["gender"],
@@ -223,8 +235,8 @@ for produto in produtos_validos:
         "brand": produto["brand"],
         "price": produto.get("price", ""),
         "sale_price": produto.get("sale_price", ""),
-        "variantes": mpn_variantes.get(produto["mpn"], []),
-        "sugestoes": sugestoes_dict.get(produto["id"], [])
+        "variantes": variantes,
+        "sugestoes": sugestoes_dict.get(id_base, [])
     })
 
 saida_json_final = {
