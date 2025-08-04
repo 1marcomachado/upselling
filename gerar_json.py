@@ -93,22 +93,26 @@ transform = transforms.Compose([
 
 # 📸 Função de embedding de imagem
 def get_image_embedding(img_url, image_path):
-    if os.path.exists(image_path):
-        img = Image.open(image_path).convert('RGB')
-    else:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(img_url, headers=headers, timeout=10)
-        if "image" not in response.headers.get("Content-Type", ""):
-            print(f"❌ Ignorado (não é imagem): {img_url}")
-            return None
-        img = Image.open(BytesIO(response.content)).convert('RGB')
-        img.save(image_path)
-    img = transform(img).unsqueeze(0).to(device)
-    with torch.no_grad():
-        features = model(img)
-    return features.cpu().numpy().flatten()
+    try:
+        if os.path.exists(image_path):
+            img = Image.open(image_path).convert('RGB')
+        else:
+            headers = {"User-Agent": "Mozilla/5.0"}
+            response = requests.get(img_url, headers=headers, timeout=10)
+            if "image" not in response.headers.get("Content-Type", ""):
+                print(f"❌ Ignorado (não é imagem): {img_url}")
+                return None
+            img = Image.open(BytesIO(response.content)).convert('RGB')
+            img.save(image_path)
+        img = transform(img).unsqueeze(0).to(device)
+        with torch.no_grad():
+            features = model(img)
+        return features.cpu().numpy().flatten()
+    except Exception as e:
+        print(f"⚠️ Erro ao processar imagem {img_url}: {e}")
+        return None
 
-# 🧠 Preparar embeddings com cache
+# 🧠 Preparar embeddings com cache (versão corrigida)
 print("🧠 A preparar embeddings com cache...")
 embeddings_file = "embeddings.npy"
 mpns_file = "mpns_embeddings.json"
@@ -121,40 +125,52 @@ else:
     embeddings = []
     mpns_existentes = []
 
-produtos_validos = []
+mpn_to_embedding = {}
+mpn_to_produto = {}
+
+# Produtos com embeddings existentes
+for i, mpn in enumerate(mpns_existentes):
+    mpn_to_embedding[mpn] = embeddings[i]
+
+# Novos produtos
 novos_embeddings = []
 mpns_adicionados = set(mpns_existentes)
 
 for p in produtos:
-    if not p["mpn"]:
+    mpn = p["mpn"]
+    if not mpn or mpn in mpns_adicionados:
         continue
-    if p["mpn"] in mpns_adicionados:
-        produtos_validos.append(p)
-        continue
-    image_filename = f"{p['mpn']}.jpg"
+
+    image_filename = f"{mpn}.jpg"
     image_path = os.path.join(image_folder, image_filename)
     emb = get_image_embedding(p["image_link"], image_path)
+
     if emb is not None:
         novos_embeddings.append(emb)
-        produtos_validos.append(p)
-        mpns_adicionados.add(p["mpn"])
+        mpn_to_embedding[mpn] = emb
+        mpn_to_produto[mpn] = p
+        mpns_adicionados.add(mpn)
 
+# Atualizar embeddings
 if novos_embeddings:
-    embeddings = np.vstack((embeddings, novos_embeddings)) if len(embeddings) else np.array(novos_embeddings)
+    novos_embeddings = np.array(novos_embeddings)
+    embeddings = np.vstack((embeddings, novos_embeddings)) if len(embeddings) else novos_embeddings
     np.save(embeddings_file, embeddings)
     with open(mpns_file, "w", encoding="utf-8") as f:
         json.dump(list(mpns_adicionados), f, ensure_ascii=False, indent=2)
 
-# 🔎 Similaridade por mpn
-print("📊 A calcular similaridades...")
-mpn_to_embedding = {}
-mpn_to_produto = {}
-for i, p in enumerate(produtos_validos):
+# Reconstruir produtos válidos com embeddings
+produtos_validos = []
+for p in produtos:
     mpn = p["mpn"]
-    if mpn not in mpn_to_embedding:
-        mpn_to_embedding[mpn] = embeddings[i]
+    if mpn in mpn_to_embedding:
+        produtos_validos.append(p)
         mpn_to_produto[mpn] = p
 
+print(f"✅ Produtos com embeddings: {len(produtos_validos)}")
+
+# 🔎 Similaridade por mpn
+print("📊 A calcular similaridades...")
 mpn_list = list(mpn_to_embedding.keys())
 mpn_embeddings = np.array([mpn_to_embedding[m] for m in mpn_list])
 similarity_matrix = cosine_similarity(mpn_embeddings)
@@ -209,7 +225,7 @@ for p in produtos_validos:
         "availability": p["availability"]
     })
 
-# 📝 Gerar JSON final (1 entrada por MPN com variantes agrupadas)
+# 📝 Gerar JSON final
 saida_json = []
 vistos = set()
 
@@ -218,10 +234,7 @@ for produto in produtos_validos:
     if mpn in vistos:
         continue
     vistos.add(mpn)
-
     variantes = mpn_variantes.get(mpn, [])
-    
-    # Escolher ID base preferencialmente com stock
     id_base = next((v["id"] for v in variantes if v["availability"] == "in stock"), variantes[0]["id"])
     
     saida_json.append({
