@@ -202,8 +202,6 @@ for p in produtos_validos:
         continue
 
     i = mpn_list.index(base_mpn)
-    cat_parts = _split_cat(p["category"])
-    last_level_base = cat_parts[-1] if cat_parts else ""
 
     # 1) candidatos brutos: mesmo site
     candidatos_indices = []
@@ -215,18 +213,20 @@ for p in produtos_validos:
             continue
         candidatos_indices.append(j)
 
-    # 2) regras por categoria
+    # 2) regras por categoria (OPÇÃO A: usar CAMINHO COMPLETO)
     categorias_validas = None
     acessorios_excecao = False
-    if last_level_base in categorias_complementares:
-        categorias_validas = categorias_complementares[last_level_base]
+
+    cat_full = (p["category"] or "").strip()
+    if cat_full in categorias_complementares:
+        categorias_validas = categorias_complementares[cat_full]
         acessorios_excecao = _is_acessorios_lista(categorias_validas)
 
     if acessorios_excecao:
-        # Exceção: ignorar brand e gender; manter apenas categorias válidas (acessórios...)
+        # Exceção: ignorar brand e gender; manter apenas categorias válidas (mesmo site já aplicado)
         candidatos_indices = [
             j for j in candidatos_indices
-            if mpn_to_produto[mpn_list[j]]["category"].split(">")[-1].strip() in categorias_validas
+            if (mpn_to_produto[mpn_list[j]]["category"] or "").strip() in categorias_validas
         ]
     else:
         # Regra original: mesmo brand e gender + (se houver) categorias válidas
@@ -236,7 +236,7 @@ for p in produtos_validos:
                (mpn_to_produto[mpn_list[j]]["gender"] == p["gender"]) and
                (
                    (categorias_validas is None) or
-                   (mpn_to_produto[mpn_list[j]]["category"].split(">")[-1].strip() in categorias_validas)
+                   ((mpn_to_produto[mpn_list[j]]["category"] or "").strip() in categorias_validas)
                )
         ]
 
@@ -332,7 +332,10 @@ put_resp = requests.put(api_url, headers=headers, json=payload)
 if put_resp.status_code in [200, 201]:
     print("✅ JSON copiado para o GitHub com sucesso.")
 else:
-    print("❌ Erro ao enviar para o GitHub:", put_resp.json())
+    try:
+        print("❌ Erro ao enviar para o GitHub:", put_resp.json())
+    except Exception:
+        print("❌ Erro ao enviar para o GitHub (sem JSON)")
 
 # Log
 log_filename = "produtos_sem_sugestoes.json"
@@ -352,4 +355,7 @@ log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload)
 if log_put_resp.status_code in [200, 201]:
     print("✅ Log de produtos sem sugestões enviado para o GitHub.")
 else:
-    print("❌ Erro ao enviar log para o GitHub:", put_resp.json())
+    try:
+        print("❌ Erro ao enviar log para o GitHub:", log_put_resp.json())
+    except Exception:
+        print("❌ Erro ao enviar log para o GitHub (sem JSON)")
