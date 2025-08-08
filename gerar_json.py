@@ -17,6 +17,14 @@ import base64
 from dotenv import load_dotenv
 from collections import defaultdict
 
+# =========================
+# ⚙️ Parâmetros ajustáveis
+# =========================
+TOTAL_LIMIT = 30        # nº máximo de sugestões por produto
+DIVERSITY_RATIO = 0.20  # fração mínima dedicada a diversidade (≈1 por categoria até 20% do total)
+SOFT_CAP_RATIO = 0.40   # teto "soft" por categoria (40% do total)
+# =========================
+
 # 🔐 Carregar variáveis de ambiente
 load_dotenv()
 token = os.getenv("GITHUB_TOKEN")
@@ -240,12 +248,82 @@ for p in produtos_validos:
                )
         ]
 
-    # 3) ranking por similaridade
+    # 3) ranking por similaridade (limite 30 + diversidade 20%)
     if candidatos_indices:
-        scores = similarity_matrix[i][candidatos_indices]
-        indices_ordenados = np.argsort(scores)[::-1][:16]
-        sugestoes = [mpn_list[candidatos_indices[k]] for k in indices_ordenados]
+        diversity_quota = max(1, int(TOTAL_LIMIT * DIVERSITY_RATIO))
+        max_per_cat = max(2, int(TOTAL_LIMIT * SOFT_CAP_RATIO))
+
+        # Mapa categoria -> [(indice, score)]
+        cat_to_candidates = defaultdict(list)
+        for j in candidatos_indices:
+            cand = mpn_to_produto[mpn_list[j]]
+            cat = (cand["category"] or "").strip()
+            score = similarity_matrix[i][j]
+            cat_to_candidates[cat].append((j, score))
+
+        # Ordenar candidatos dentro de cada categoria por score desc
+        for cat in cat_to_candidates:
+            cat_to_candidates[cat].sort(key=lambda x: x[1], reverse=True)
+
+        # Quais categorias queremos cobrir?
+        cats_presentes = list(cat_to_candidates.keys())
+        if categorias_validas:
+            # manter a ordem de categorias válidas, mas só as que têm candidatos
+            cats_presentes = [c for c in categorias_validas if c in cat_to_candidates]
+            # Se não houver nenhuma das válidas, fica o que existir
+            if not cats_presentes:
+                cats_presentes = list(cat_to_candidates.keys())
+        else:
+            # ordenar categorias pelo melhor score
+            cats_presentes.sort(key=lambda c: cat_to_candidates[c][0][1], reverse=True)
+
+        # Diversidade mínima: 1 por categoria até ao diversity_quota (priorizar categorias com melhor top-score)
+        cats_ordenadas_por_topscore = sorted(
+            cats_presentes,
+            key=lambda c: cat_to_candidates[c][0][1],
+            reverse=True
+        )
+
+        sugestoes_indices = []
+        cat_counts = defaultdict(int)
+        usados = set()
+
+        for cat in cats_ordenadas_por_topscore[:diversity_quota]:
+            idx_top, _ = cat_to_candidates[cat][0]
+            if idx_top not in usados:
+                sugestoes_indices.append(idx_top)
+                usados.add(idx_top)
+                cat_counts[cat] += 1
+
+        # Pool global dos restantes candidatos, ordenados por score desc
+        pool_global = sorted(
+            [j for j in candidatos_indices if j not in usados],
+            key=lambda x: similarity_matrix[i][x],
+            reverse=True
+        )
+
+        # Preencher por relevância, respeitando teto por categoria
+        for j in pool_global:
+            if len(sugestoes_indices) >= TOTAL_LIMIT:
+                break
+            cat = (mpn_to_produto[mpn_list[j]]["category"] or "").strip()
+            if cat_counts[cat] < max_per_cat:
+                sugestoes_indices.append(j)
+                cat_counts[cat] += 1
+
+        # Se ainda faltarem lugares (p.ex., tetos muito restritivos), relaxar o teto
+        if len(sugestoes_indices) < TOTAL_LIMIT:
+            restantes_relax = [j for j in pool_global if j not in set(sugestoes_indices)]
+            for j in restantes_relax:
+                if len(sugestoes_indices) >= TOTAL_LIMIT:
+                    break
+                sugestoes_indices.append(j)
+
+        # Converter indices -> mpn e guardar
+        sugestoes = [mpn_list[idx] for idx in sugestoes_indices[:TOTAL_LIMIT]]
+        # Guardar por ID base do produto (usar produto atual p)
         sugestoes_dict[p["id"]] = sugestoes
+
     else:
         produtos_sem_sugestoes.append({
             "id": p["id"],
@@ -279,7 +357,8 @@ for produto in produtos_validos:
         continue
     vistos.add(mpn)
     variantes = mpn_variantes.get(mpn, [])
-    id_base = next((v["id"] for v in variantes if (v["availability"] or "").lower() == "in stock"), variantes[0]["id"] if variantes else produto["id"])
+    id_base = next((v["id"] for v in variantes if (v["availability"] or "").lower() == "in stock"),
+                   variantes[0]["id"] if variantes else produto["id"])
 
     saida_json.append({
         "id": id_base,
@@ -293,7 +372,7 @@ for produto in produtos_validos:
         "price": produto.get("price", ""),
         "sale_price": produto.get("sale_price", ""),
         "variantes": variantes,
-        "sugestoes": sugestoes_dict.get(id_base, [])
+        "sugestoes": sugestoes_dict.get(id_base, sugestoes_dict.get(produto["id"], []))
     })
 
 saida_json_final = {
