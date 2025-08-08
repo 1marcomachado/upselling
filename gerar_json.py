@@ -112,7 +112,24 @@ def get_image_embedding(img_url, image_path):
         print(f"⚠️ Erro ao processar imagem {img_url}: {e}")
         return None
 
-# 🧠 Preparar embeddings com cache (versão corrigida)
+# Helpers para categorias / exceção de Acessórios
+def _split_cat(cat):
+    return [c.strip() for c in cat.split(">")] if cat else []
+
+def _first_level(cat):
+    parts = _split_cat(cat)
+    return parts[0].casefold() if parts else ""
+
+def _is_acessorios_lista(categorias_validas):
+    # Exceção ativa se QUALQUER categoria válida começar por "Acessórios"
+    if not categorias_validas:
+        return False
+    for c in categorias_validas:
+        if _first_level(c) == "acessórios":
+            return True
+    return False
+
+# 🧠 Preparar embeddings com cache (versão original com cache)
 print("🧠 A preparar embeddings com cache...")
 embeddings_file = "embeddings.npy"
 mpns_file = "mpns_embeddings.json"
@@ -175,33 +192,59 @@ mpn_list = list(mpn_to_embedding.keys())
 mpn_embeddings = np.array([mpn_to_embedding[m] for m in mpn_list])
 similarity_matrix = cosine_similarity(mpn_embeddings)
 
-# 🔄 Construir sugestões
+# 🔄 Construir sugestões (com exceção de Acessórios a ignorar brand/gender)
 sugestoes_dict = {}
 produtos_sem_sugestoes = []
+
 for p in produtos_validos:
     base_mpn = p["mpn"]
     if base_mpn not in mpn_to_embedding:
         continue
+
     i = mpn_list.index(base_mpn)
-    last_level_base = p["category"].split(">")[-1].strip()
-    second_level_base = p["category"].split(">")[1].strip() if len(p["category"].split(">")) > 1 else ""
+    cat_parts = _split_cat(p["category"])
+    last_level_base = cat_parts[-1] if cat_parts else ""
 
-    candidatos = [
-        j for j, mpn_cand in enumerate(mpn_list)
-        if mpn_cand != base_mpn and
-           mpn_to_produto[mpn_cand]["site"] == p["site"] and
-           mpn_to_produto[mpn_cand]["brand"] == p["brand"] and
-           mpn_to_produto[mpn_cand]["gender"] == p["gender"]
-    ]
+    # 1) candidatos brutos: mesmo site
+    candidatos_indices = []
+    for j, mpn_cand in enumerate(mpn_list):
+        if mpn_cand == base_mpn:
+            continue
+        cand = mpn_to_produto[mpn_cand]
+        if cand["site"] != p["site"]:
+            continue
+        candidatos_indices.append(j)
 
+    # 2) regras por categoria
+    categorias_validas = None
+    acessorios_excecao = False
     if last_level_base in categorias_complementares:
         categorias_validas = categorias_complementares[last_level_base]
-        candidatos = [j for j in candidatos if mpn_to_produto[mpn_list[j]]["category"].split(">")[-1].strip() in categorias_validas]
+        acessorios_excecao = _is_acessorios_lista(categorias_validas)
 
-    if candidatos:
-        scores = similarity_matrix[i][candidatos]
+    if acessorios_excecao:
+        # Exceção: ignorar brand e gender; manter apenas categorias válidas (acessórios...)
+        candidatos_indices = [
+            j for j in candidatos_indices
+            if mpn_to_produto[mpn_list[j]]["category"].split(">")[-1].strip() in categorias_validas
+        ]
+    else:
+        # Regra original: mesmo brand e gender + (se houver) categorias válidas
+        candidatos_indices = [
+            j for j in candidatos_indices
+            if (mpn_to_produto[mpn_list[j]]["brand"] == p["brand"]) and
+               (mpn_to_produto[mpn_list[j]]["gender"] == p["gender"]) and
+               (
+                   (categorias_validas is None) or
+                   (mpn_to_produto[mpn_list[j]]["category"].split(">")[-1].strip() in categorias_validas)
+               )
+        ]
+
+    # 3) ranking por similaridade
+    if candidatos_indices:
+        scores = similarity_matrix[i][candidatos_indices]
         indices_ordenados = np.argsort(scores)[::-1][:16]
-        sugestoes = [mpn_list[candidatos[k]] for k in indices_ordenados]
+        sugestoes = [mpn_list[candidatos_indices[k]] for k in indices_ordenados]
         sugestoes_dict[p["id"]] = sugestoes
     else:
         produtos_sem_sugestoes.append({
@@ -213,7 +256,8 @@ for p in produtos_validos:
             "site": p["site"],
             "gender": p["gender"],
             "pack": p["pack"],
-            "motivo": "Sem sugestões visuais válidas"
+            "motivo": "Sem sugestões válidas (exceção Acessórios ativa)" if acessorios_excecao
+                      else "Sem sugestões visuais válidas"
         })
 
 # 👕 Agrupar variantes por mpn
@@ -235,8 +279,8 @@ for produto in produtos_validos:
         continue
     vistos.add(mpn)
     variantes = mpn_variantes.get(mpn, [])
-    id_base = next((v["id"] for v in variantes if v["availability"] == "in stock"), variantes[0]["id"])
-    
+    id_base = next((v["id"] for v in variantes if (v["availability"] or "").lower() == "in stock"), variantes[0]["id"] if variantes else produto["id"])
+
     saida_json.append({
         "id": id_base,
         "mpn": mpn,
@@ -308,4 +352,4 @@ log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload)
 if log_put_resp.status_code in [200, 201]:
     print("✅ Log de produtos sem sugestões enviado para o GitHub.")
 else:
-    print("❌ Erro ao enviar log para o GitHub:", log_put_resp.json())
+    print("❌ Erro ao enviar log para o GitHub:", put_resp.json())
