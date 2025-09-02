@@ -200,7 +200,8 @@ mpn_list = list(mpn_to_embedding.keys())
 mpn_embeddings = np.array([mpn_to_embedding[m] for m in mpn_list])
 similarity_matrix = cosine_similarity(mpn_embeddings)
 
-# 🔄 Construir sugestões (com exceção de Acessórios a ignorar brand/gender)
+# 🔄 Construir sugestões (com exceção de Acessórios a ignorar brand/gender,
+#     MAS no site == "2" a exceção NÃO se aplica: respeita brand/gender)
 sugestoes_dict = {}
 produtos_sem_sugestoes = []
 
@@ -217,7 +218,7 @@ for p in produtos_validos:
         if mpn_cand == base_mpn:
             continue
         cand = mpn_to_produto[mpn_cand]
-        if cand["site"] != p["site"]:
+        if (cand.get("site") or "") != (p.get("site") or ""):
             continue
         candidatos_indices.append(j)
 
@@ -230,7 +231,8 @@ for p in produtos_validos:
         categorias_validas = categorias_complementares[cat_full]
         acessorios_excecao = _is_acessorios_lista(categorias_validas)
 
-    if acessorios_excecao:
+    # 🔵 No site "2", mesmo que seja "Acessórios", NÃO aplicar a exceção; respeitar brand/gender
+    if acessorios_excecao and (str(p.get("site", "")).strip() != "2"):
         # Exceção: ignorar brand e gender; manter apenas categorias válidas (mesmo site já aplicado)
         candidatos_indices = [
             j for j in candidatos_indices
@@ -334,7 +336,7 @@ for p in produtos_validos:
             "site": p["site"],
             "gender": p["gender"],
             "pack": p["pack"],
-            "motivo": "Sem sugestões válidas (exceção Acessórios ativa)" if acessorios_excecao
+            "motivo": "Sem sugestões válidas (exceção Acessórios ativa)" if (acessorios_excecao and str(p.get("site","")).strip() != "2")
                       else "Sem sugestões visuais válidas"
         })
 
@@ -347,18 +349,29 @@ for p in produtos_validos:
         "availability": p["availability"]
     })
 
-# 📝 Gerar JSON final
+# 📝 Gerar JSON final (mostrar todas as variantes, mas só incluir produtos com >=1 variante em stock)
 saida_json = []
 vistos = set()
+
+def _is_instock(av):
+    return ((av or "").strip().lower() == "in stock")
 
 for produto in produtos_validos:
     mpn = produto["mpn"]
     if mpn in vistos:
         continue
     vistos.add(mpn)
-    variantes = mpn_variantes.get(mpn, [])
-    id_base = next((v["id"] for v in variantes if (v["availability"] or "").lower() == "in stock"),
-                   variantes[0]["id"] if variantes else produto["id"])
+
+    variantes_all = mpn_variantes.get(mpn, [])
+
+    # 🔍 verifica se há pelo menos uma variante com stock
+    variantes_instock = [v for v in variantes_all if _is_instock(v.get("availability"))]
+    if not variantes_instock:
+        # ❌ sem stock em qualquer variante → não incluir no JSON final
+        continue
+
+    # ✅ escolher id_base de uma variante com stock
+    id_base = variantes_instock[0]["id"]
 
     saida_json.append({
         "id": id_base,
@@ -371,7 +384,9 @@ for produto in produtos_validos:
         "brand": produto["brand"],
         "price": produto.get("price", ""),
         "sale_price": produto.get("sale_price", ""),
-        "variantes": variantes,
+        # ✅ expor TODAS as variantes (com e sem stock)
+        "variantes": variantes_all,
+        # manter lookup de sugestões pelo id_base (em stock)
         "sugestoes": sugestoes_dict.get(id_base, sugestoes_dict.get(produto["id"], []))
     })
 
