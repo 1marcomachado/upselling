@@ -46,48 +46,6 @@ session.headers.update({"User-Agent": "Mozilla/5.0"})
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
 session.mount("https://", HTTPAdapter(max_retries=retries))
 
-# =========================
-# 🔧 Helpers
-# =========================
-def _get_text(entry, tag, ns):
-    el = entry.find(tag, ns)
-    return el.text.strip() if el is not None and el.text else ""
-
-def _split_cat(cat):
-    return [c.strip() for c in cat.split(">")] if cat else []
-
-def _first_level(cat):
-    parts = _split_cat(cat)
-    return parts[0].casefold() if parts else ""
-
-def _is_acessorios_lista(categorias_validas):
-    # Exceção ativa se QUALQUER categoria válida começar por "Acessórios"
-    if not categorias_validas:
-        return False
-    for c in categorias_validas:
-        if _first_level(c) == "acessórios":
-            return True
-    return False
-
-def _is_instock(av):
-    return ((av or "").strip().lower() == "in stock")
-
-def _build_title_obj(produto):
-    """
-    Constrói o objeto de títulos multi-idioma com fallbacks:
-    1) usa title_pt/es/en se existirem
-    2) senão tenta 'title' legacy
-    3) último recurso: mpn
-    """
-    legacy = produto.get("title", "")
-    pt = (produto.get("title_pt") or "").strip() or legacy
-    es = (produto.get("title_es") or "").strip() or legacy or pt
-    en = (produto.get("title_en") or "").strip() or legacy or pt
-    if not any([pt, es, en]):
-        fallback = produto.get("mpn", "")
-        pt = es = en = fallback
-    return {"pt": pt, "es": es, "en": en}
-
 # 🔽 Descarregar XML
 print("🔽 A descarregar XML...")
 r = session.get(xml_url, timeout=30)
@@ -97,28 +55,24 @@ tree = ET.ElementTree(ET.fromstring(xml_content))
 root = tree.getroot()
 ns = {'g': 'http://base.google.com/ns/1.0', 'atom': 'http://www.w3.org/2005/Atom'}
 
-# 📦 Parse produtos
+# 📦 Parse produtos (sem title “genérico”)
 produtos = []
 for entry in root.findall('atom:entry', ns):
-    id_ = _get_text(entry, 'g:id', ns)
-    mpn = _get_text(entry, 'g:mpn', ns)
-
-    # ---- títulos multi-idioma + legacy ----
-    title_pt = _get_text(entry, 'g:title_pt', ns)
-    title_es = _get_text(entry, 'g:title_es', ns)
-    title_en = _get_text(entry, 'g:title_en', ns)
-    title_legacy = _get_text(entry, 'g:title', ns)  # opcional (fallback)
-
-    category = _get_text(entry, 'g:category', ns)
-    brand = _get_text(entry, 'g:brand', ns)
-    image_link = _get_text(entry, 'g:image_link', ns)
-    site = _get_text(entry, 'g:site', ns)
-    gender = _get_text(entry, 'g:gender', ns)
-    pack = _get_text(entry, 'g:pack', ns)
-    price = _get_text(entry, 'g:price', ns)
-    sale_price = _get_text(entry, 'g:sale_price', ns)
-    size = _get_text(entry, 'g:size', ns)
-    availability = _get_text(entry, 'g:availability', ns)
+    id_ = entry.find('g:id', ns).text if entry.find('g:id', ns) is not None else ""
+    mpn = entry.find('g:mpn', ns).text if entry.find('g:mpn', ns) is not None else ""
+    title_pt = entry.find('g:title_pt', ns).text.strip() if entry.find('g:title_pt', ns) is not None else ""
+    title_es = entry.find('g:title_es', ns).text.strip() if entry.find('g:title_es', ns) is not None else ""
+    title_en = entry.find('g:title_en', ns).text.strip() if entry.find('g:title_en', ns) is not None else ""
+    category = entry.find('g:category', ns).text if entry.find('g:category', ns) is not None else ""
+    brand = entry.find('g:brand', ns).text.strip() if entry.find('g:brand', ns) is not None else ""
+    image_link = entry.find('g:image_link', ns).text if entry.find('g:image_link', ns) is not None else ""
+    site = entry.find('g:site', ns).text if entry.find('g:site', ns) is not None else ""
+    gender = entry.find('g:gender', ns).text if entry.find('g:gender', ns) is not None else ""
+    pack = entry.find('g:pack', ns).text if entry.find('g:pack', ns) is not None else ""
+    price = entry.find('g:price', ns).text if entry.find('g:price', ns) is not None else ""
+    sale_price = entry.find('g:sale_price', ns).text if entry.find('g:sale_price', ns) is not None else ""
+    size = entry.find('g:size', ns).text if entry.find('g:size', ns) is not None else ""
+    availability = entry.find('g:availability', ns).text if entry.find('g:availability', ns) is not None else ""
 
     produtos.append({
         "id": id_,
@@ -126,7 +80,6 @@ for entry in root.findall('atom:entry', ns):
         "title_pt": title_pt,
         "title_es": title_es,
         "title_en": title_en,
-        "title": title_legacy,  # legacy para fallback
         "price": price,
         "sale_price": sale_price,
         "category": category,
@@ -157,7 +110,7 @@ def get_image_embedding(img_url, image_path):
             img = Image.open(image_path).convert('RGB')
         else:
             headers = {"User-Agent": "Mozilla/5.0"}
-            response = session.get(img_url, headers=headers, timeout=10)
+            response = requests.get(img_url, headers=headers, timeout=10)
             if "image" not in response.headers.get("Content-Type", ""):
                 print(f"❌ Ignorado (não é imagem): {img_url}")
                 return None
@@ -171,7 +124,18 @@ def get_image_embedding(img_url, image_path):
         print(f"⚠️ Erro ao processar imagem {img_url}: {e}")
         return None
 
-# 🧠 Preparar embeddings com cache (versão original com cache)
+# Helpers para categorias / exceções
+def _split_cat(cat):
+    return [c.strip() for c in cat.split(">")] if cat else []
+
+def _first_level(cat):
+    parts = _split_cat(cat)
+    return parts[0].casefold() if parts else ""
+
+def _is_accessories(cat_str):
+    return _first_level(cat_str) == "acessórios" if cat_str else False
+
+# 🧠 Preparar embeddings com cache
 print("🧠 A preparar embeddings com cache...")
 embeddings_file = "embeddings.npy"
 mpns_file = "mpns_embeddings.json"
@@ -234,8 +198,7 @@ mpn_list = list(mpn_to_embedding.keys())
 mpn_embeddings = np.array([mpn_to_embedding[m] for m in mpn_list])
 similarity_matrix = cosine_similarity(mpn_embeddings)
 
-# 🔄 Construir sugestões (com exceção de Acessórios a ignorar brand/gender,
-#     MAS no site == "2" a exceção NÃO se aplica: respeita brand/gender)
+# 🔄 Construir sugestões (prioriza complementares; Acessórios sem brand; mantém sempre site+gender)
 sugestoes_dict = {}
 produtos_sem_sugestoes = []
 
@@ -246,133 +209,182 @@ for p in produtos_validos:
 
     i = mpn_list.index(base_mpn)
 
-    # 1) candidatos brutos: mesmo site
-    candidatos_indices = []
+    site_base   = (p.get("site") or "").strip()
+    brand_base  = (p.get("brand") or "").strip()
+    gender_base = (p.get("gender") or "").strip()
+    cat_full    = (p.get("category") or "").strip()
+
+    # 1) categorias complementares (ordem de preferência)
+    categorias_validas = None
+    if cat_full in categorias_complementares:
+        categorias_validas = [c.strip() for c in categorias_complementares[cat_full] if c and c.strip()]
+
+    acessorios_em_validas = False
+    if categorias_validas:
+        acessorios_em_validas = any(_is_accessories(c) for c in categorias_validas)
+
+    # 2) construir pools (sempre MESMO site + MESMO gender)
+    cand_preferidos = []  # dentro das complementares
+    cand_fallback  = []   # fora das complementares
+
     for j, mpn_cand in enumerate(mpn_list):
         if mpn_cand == base_mpn:
             continue
         cand = mpn_to_produto[mpn_cand]
-        if (cand.get("site") or "") != (p.get("site") or ""):
+
+        if (cand.get("site") or "").strip() != site_base:
             continue
-        candidatos_indices.append(j)
+        if (cand.get("gender") or "").strip() != gender_base:
+            continue
 
-    # 2) regras por categoria (OPÇÃO A: usar CAMINHO COMPLETO)
-    categorias_validas = None
-    acessorios_excecao = False
+        cand_cat   = (cand.get("category") or "").strip()
+        cand_brand = (cand.get("brand") or "").strip()
 
-    cat_full = (p["category"] or "").strip()
-    if cat_full in categorias_complementares:
-        categorias_validas = categorias_complementares[cat_full]
-        acessorios_excecao = _is_acessorios_lista(categorias_validas)
+        in_valid = bool(categorias_validas) and (cand_cat in categorias_validas)
+        is_acess = _is_accessories(cand_cat)
 
-    # 🔵 No site "2", mesmo que seja "Acessórios", NÃO aplicar a exceção; respeitar brand/gender
-    if acessorios_excecao and (str(p.get("site", "")).strip() != "2"):
-        # Exceção: ignorar brand e gender; manter apenas categorias válidas (mesmo site já aplicado)
-        candidatos_indices = [
-            j for j in candidatos_indices
-            if (mpn_to_produto[mpn_list[j]]["category"] or "").strip() in categorias_validas
-        ]
-    else:
-        # Regra original: mesmo brand e gender + (se houver) categorias válidas
-        candidatos_indices = [
-            j for j in candidatos_indices
-            if (mpn_to_produto[mpn_list[j]]["brand"] == p["brand"]) and
-               (mpn_to_produto[mpn_list[j]]["gender"] == p["gender"]) and
-               (
-                   (categorias_validas is None) or
-                   ((mpn_to_produto[mpn_list[j]]["category"] or "").strip() in categorias_validas)
-               )
-        ]
-
-    # 3) ranking por similaridade (limite 30 + diversidade 20%)
-    if candidatos_indices:
-        diversity_quota = max(1, int(TOTAL_LIMIT * DIVERSITY_RATIO))
-        max_per_cat = max(2, int(TOTAL_LIMIT * SOFT_CAP_RATIO))
-
-        # Mapa categoria -> [(indice, score)]
-        cat_to_candidates = defaultdict(list)
-        for j in candidatos_indices:
-            cand = mpn_to_produto[mpn_list[j]]
-            cat = (cand["category"] or "").strip()
-            score = similarity_matrix[i][j]
-            cat_to_candidates[cat].append((j, score))
-
-        # Ordenar candidatos dentro de cada categoria por score desc
-        for cat in cat_to_candidates:
-            cat_to_candidates[cat].sort(key=lambda x: x[1], reverse=True)
-
-        # Quais categorias queremos cobrir?
-        cats_presentes = list(cat_to_candidates.keys())
-        if categorias_validas:
-            # manter a ordem de categorias válidas, mas só as que têm candidatos
-            cats_presentes = [c for c in categorias_validas if c in cat_to_candidates]
-            # Se não houver nenhuma das válidas, fica o que existir
-            if not cats_presentes:
-                cats_presentes = list(cat_to_candidates.keys())
+        # regra brand:
+        # - se categoria é Acessórios e está nas complementares → brand NÃO é exigida
+        # - nos restantes casos → brand tem de coincidir
+        if in_valid and is_acess:
+            brand_ok = True
         else:
-            # ordenar categorias pelo melhor score
-            cats_presentes.sort(key=lambda c: cat_to_candidates[c][0][1], reverse=True)
+            brand_ok = (cand_brand == brand_base)
 
-        # Diversidade mínima: 1 por categoria até ao diversity_quota (priorizar categorias com melhor top-score)
-        cats_ordenadas_por_topscore = sorted(
-            cats_presentes,
-            key=lambda c: cat_to_candidates[c][0][1],
-            reverse=True
-        )
+        if not brand_ok:
+            # ainda pode ir para fallback? (mantemos a mesma exceção para Acessórios)
+            if is_acess and acessorios_em_validas:
+                # permitir sem brand também no fallback para manter coerência
+                pass
+            else:
+                continue
 
-        sugestoes_indices = []
-        cat_counts = defaultdict(int)
-        usados = set()
+        if in_valid:
+            cand_preferidos.append(j)
+        else:
+            cand_fallback.append(j)
 
-        for cat in cats_ordenadas_por_topscore[:diversity_quota]:
-            idx_top, _ = cat_to_candidates[cat][0]
-            if idx_top not in usados:
-                sugestoes_indices.append(idx_top)
-                usados.add(idx_top)
-                cat_counts[cat] += 1
-
-        # Pool global dos restantes candidatos, ordenados por score desc
-        pool_global = sorted(
-            [j for j in candidatos_indices if j not in usados],
-            key=lambda x: similarity_matrix[i][x],
-            reverse=True
-        )
-
-        # Preencher por relevância, respeitando teto por categoria
-        for j in pool_global:
-            if len(sugestoes_indices) >= TOTAL_LIMIT:
-                break
-            cat = (mpn_to_produto[mpn_list[j]]["category"] or "").strip()
-            if cat_counts[cat] < max_per_cat:
-                sugestoes_indices.append(j)
-                cat_counts[cat] += 1
-
-        # Se ainda faltarem lugares (p.ex., tetos muito restritivos), relaxar o teto
-        if len(sugestoes_indices) < TOTAL_LIMIT:
-            restantes_relax = [j for j in pool_global if j not in set(sugestoes_indices)]
-            for j in restantes_relax:
-                if len(sugestoes_indices) >= TOTAL_LIMIT:
-                    break
-                sugestoes_indices.append(j)
-
-        # Converter indices -> mpn e guardar
-        sugestoes = [mpn_list[idx] for idx in sugestoes_indices[:TOTAL_LIMIT]]
-        # Guardar por ID base do produto (usar produto atual p)
-        sugestoes_dict[p["id"]] = sugestoes
-
-    else:
+    total_pool = len(cand_preferidos) + len(cand_fallback)
+    if total_pool == 0:
         produtos_sem_sugestoes.append({
             "id": p["id"],
             "mpn": p["mpn"],
-            "title": _build_title_obj(p),  # multi-idioma
+            "title_pt": p.get("title_pt",""),
+            "title_es": p.get("title_es",""),
+            "title_en": p.get("title_en",""),
             "category": p["category"],
             "brand": p["brand"],
             "site": p["site"],
             "gender": p["gender"],
             "pack": p["pack"],
-            "motivo": "Sem sugestões válidas (exceção Acessórios ativa)" if (acessorios_excecao and str(p.get("site","")).strip() != "2")
-                      else "Sem sugestões visuais válidas"
+            "motivo": "Sem candidatos (site/gender/brand + regra Acessórios)"
         })
+        continue
+
+    # 3) ranking + diversidade
+    diversity_quota = max(1, int(TOTAL_LIMIT * DIVERSITY_RATIO))
+    max_per_cat     = max(2, int(TOTAL_LIMIT * SOFT_CAP_RATIO))
+
+    def rank_by_cat(indices):
+        cat_to_candidates = defaultdict(list)
+        for j in indices:
+            cand = mpn_to_produto[mpn_list[j]]
+            cat  = (cand.get("category") or "").strip()
+            score = similarity_matrix[i][j]
+            cat_to_candidates[cat].append((j, score))
+        for cat in cat_to_candidates:
+            cat_to_candidates[cat].sort(key=lambda x: x[1], reverse=True)
+
+        cats_presentes = list(cat_to_candidates.keys())
+        if categorias_validas:
+            preferidas = [c for c in categorias_validas if c in cat_to_candidates]
+            restantes  = [c for c in cats_presentes if c not in set(preferidas)]
+            restantes.sort(key=lambda c: cat_to_candidates[c][0][1], reverse=True)
+            cats_ordenadas = preferidas + restantes
+        else:
+            cats_ordenadas = sorted(cats_presentes, key=lambda c: cat_to_candidates[c][0][1], reverse=True)
+        return cats_ordenadas, cat_to_candidates
+
+    # Fase 1: só complementares
+    sugestoes_indices = []
+    usados = set()
+    cat_counts = defaultdict(int)
+
+    cats_pref, map_pref = rank_by_cat(cand_preferidos)
+
+    # diversidade mínima dentro das complementares
+    for cat in cats_pref:
+        if len(sugestoes_indices) >= diversity_quota:
+            break
+        top_idx, _ = map_pref[cat][0]
+        if top_idx not in usados:
+            sugestoes_indices.append(top_idx)
+            usados.add(top_idx)
+            cat_counts[cat] += 1
+
+    # pool global preferidos (prioridade por categoria complementar e score)
+    def is_cat_valid(c):
+        return bool(categorias_validas) and (c in categorias_validas)
+
+    pool_pref_global = sorted(
+        [j for j in cand_preferidos if j not in usados],
+        key=lambda x: (0 if is_cat_valid((mpn_to_produto[mpn_list[x]]["category"] or "").strip()) else 1,
+                       -similarity_matrix[i][x])
+    )
+
+    for j in pool_pref_global:
+        if len(sugestoes_indices) >= TOTAL_LIMIT:
+            break
+        cat = (mpn_to_produto[mpn_list[j]]["category"] or "").strip()
+        if cat_counts[cat] < max_per_cat:
+            sugestoes_indices.append(j)
+            usados.add(j)
+            cat_counts[cat] += 1
+
+    # Fase 2: fallback (fora das complementares)
+    if len(sugestoes_indices) < TOTAL_LIMIT and cand_fallback:
+        cats_fb, map_fb = rank_by_cat(cand_fallback)
+
+        # completar diversidade mínima se necessário
+        if len(sugestoes_indices) < diversity_quota:
+            for cat in cats_fb:
+                if len(sugestoes_indices) >= diversity_quota:
+                    break
+                top_idx, _ = map_fb[cat][0]
+                if top_idx not in usados:
+                    sugestoes_indices.append(top_idx)
+                    usados.add(top_idx)
+                    cat_counts[cat] += 1
+
+        pool_fb_global = sorted(
+            [j for j in cand_fallback if j not in usados],
+            key=lambda x: -similarity_matrix[i][x]
+        )
+
+        for j in pool_fb_global:
+            if len(sugestoes_indices) >= TOTAL_LIMIT:
+                break
+            cat = (mpn_to_produto[mpn_list[j]]["category"] or "").strip()
+            if cat_counts[cat] < max_per_cat:
+                sugestoes_indices.append(j)
+                usados.add(j)
+                cat_counts[cat] += 1
+
+        # relaxar teto por categoria se ainda faltar
+        if len(sugestoes_indices) < TOTAL_LIMIT:
+            restantes_relax = [j for j in pool_fb_global if j not in usados]
+            for j in restantes_relax:
+                if len(sugestoes_indices) >= TOTAL_LIMIT:
+                    break
+                sugestoes_indices.append(j)
+                usados.add(j)
+
+    # limitar ao universo existente
+    all_candidates = set(cand_preferidos) | set(cand_fallback)
+    sugestoes_indices = [idx for idx in sugestoes_indices if idx in all_candidates][:min(TOTAL_LIMIT, len(all_candidates))]
+
+    sugestoes = [mpn_list[idx] for idx in sugestoes_indices]
+    sugestoes_dict[p["id"]] = sugestoes
 
 # 👕 Agrupar variantes por mpn
 mpn_variantes = defaultdict(list)
@@ -386,6 +398,9 @@ for p in produtos_validos:
 # 📝 Gerar JSON final (mostrar todas as variantes, mas só incluir produtos com >=1 variante em stock)
 saida_json = []
 vistos = set()
+
+def _is_instock(av):
+    return ((av or "").strip().lower() == "in stock")
 
 for produto in produtos_validos:
     mpn = produto["mpn"]
@@ -407,7 +422,9 @@ for produto in produtos_validos:
     saida_json.append({
         "id": id_base,
         "mpn": mpn,
-        "title": _build_title_obj(produto),  # objeto {pt, es, en}
+        "title_pt": produto.get("title_pt", ""),
+        "title_es": produto.get("title_es", ""),
+        "title_en": produto.get("title_en", ""),
         "image": produto["image_link"],
         "gender": produto["gender"],
         "site": produto["site"],
@@ -442,7 +459,7 @@ headers = {
 }
 
 # JSON principal
-get_resp = session.get(api_url, headers=headers, timeout=30)
+get_resp = requests.get(api_url, headers=headers)
 sha = get_resp.json().get("sha") if get_resp.status_code == 200 else None
 with open(filename, "rb") as f:
     content = base64.b64encode(f.read()).decode()
@@ -453,7 +470,7 @@ payload = {
 }
 if sha:
     payload["sha"] = sha
-put_resp = session.put(api_url, headers=headers, json=payload, timeout=30)
+put_resp = requests.put(api_url, headers=headers, json=payload)
 if put_resp.status_code in [200, 201]:
     print("✅ JSON copiado para o GitHub com sucesso.")
 else:
@@ -467,7 +484,7 @@ log_filename = "produtos_sem_sugestoes.json"
 log_api_url = f"https://api.github.com/repos/{repo}/contents/{log_filename}"
 with open(log_filename, "rb") as f:
     log_content = base64.b64encode(f.read()).decode()
-log_get_resp = session.get(log_api_url, headers=headers, timeout=30)
+log_get_resp = requests.get(log_api_url, headers=headers)
 log_sha = log_get_resp.json().get("sha") if log_get_resp.status_code == 200 else None
 log_payload = {
     "message": "Atualizar log de produtos sem sugestões",
@@ -476,7 +493,7 @@ log_payload = {
 }
 if log_sha:
     log_payload["sha"] = log_sha
-log_put_resp = session.put(log_api_url, headers=headers, json=log_payload, timeout=30)
+log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload)
 if log_put_resp.status_code in [200, 201]:
     print("✅ Log de produtos sem sugestões enviado para o GitHub.")
 else:
