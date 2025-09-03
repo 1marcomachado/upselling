@@ -46,6 +46,48 @@ session.headers.update({"User-Agent": "Mozilla/5.0"})
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
 session.mount("https://", HTTPAdapter(max_retries=retries))
 
+# =========================
+# 🔧 Helpers
+# =========================
+def _get_text(entry, tag, ns):
+    el = entry.find(tag, ns)
+    return el.text.strip() if el is not None and el.text else ""
+
+def _split_cat(cat):
+    return [c.strip() for c in cat.split(">")] if cat else []
+
+def _first_level(cat):
+    parts = _split_cat(cat)
+    return parts[0].casefold() if parts else ""
+
+def _is_acessorios_lista(categorias_validas):
+    # Exceção ativa se QUALQUER categoria válida começar por "Acessórios"
+    if not categorias_validas:
+        return False
+    for c in categorias_validas:
+        if _first_level(c) == "acessórios":
+            return True
+    return False
+
+def _is_instock(av):
+    return ((av or "").strip().lower() == "in stock")
+
+def _build_title_obj(produto):
+    """
+    Constrói o objeto de títulos multi-idioma com fallbacks:
+    1) usa title_pt/es/en se existirem
+    2) senão tenta 'title' legacy
+    3) último recurso: mpn
+    """
+    legacy = produto.get("title", "")
+    pt = (produto.get("title_pt") or "").strip() or legacy
+    es = (produto.get("title_es") or "").strip() or legacy or pt
+    en = (produto.get("title_en") or "").strip() or legacy or pt
+    if not any([pt, es, en]):
+        fallback = produto.get("mpn", "")
+        pt = es = en = fallback
+    return {"pt": pt, "es": es, "en": en}
+
 # 🔽 Descarregar XML
 print("🔽 A descarregar XML...")
 r = session.get(xml_url, timeout=30)
@@ -58,24 +100,33 @@ ns = {'g': 'http://base.google.com/ns/1.0', 'atom': 'http://www.w3.org/2005/Atom
 # 📦 Parse produtos
 produtos = []
 for entry in root.findall('atom:entry', ns):
-    id_ = entry.find('g:id', ns).text if entry.find('g:id', ns) is not None else ""
-    mpn = entry.find('g:mpn', ns).text if entry.find('g:mpn', ns) is not None else ""
-    title = entry.find('g:title', ns).text.strip() if entry.find('g:title', ns) is not None else ""
-    category = entry.find('g:category', ns).text if entry.find('g:category', ns) is not None else ""
-    brand = entry.find('g:brand', ns).text.strip() if entry.find('g:brand', ns) is not None else ""
-    image_link = entry.find('g:image_link', ns).text if entry.find('g:image_link', ns) is not None else ""
-    site = entry.find('g:site', ns).text if entry.find('g:site', ns) is not None else ""
-    gender = entry.find('g:gender', ns).text if entry.find('g:gender', ns) is not None else ""
-    pack = entry.find('g:pack', ns).text if entry.find('g:pack', ns) is not None else ""
-    price = entry.find('g:price', ns).text if entry.find('g:price', ns) is not None else ""
-    sale_price = entry.find('g:sale_price', ns).text if entry.find('g:sale_price', ns) is not None else ""
-    size = entry.find('g:size', ns).text if entry.find('g:size', ns) is not None else ""
-    availability = entry.find('g:availability', ns).text if entry.find('g:availability', ns) is not None else ""
+    id_ = _get_text(entry, 'g:id', ns)
+    mpn = _get_text(entry, 'g:mpn', ns)
+
+    # ---- títulos multi-idioma + legacy ----
+    title_pt = _get_text(entry, 'g:title_pt', ns)
+    title_es = _get_text(entry, 'g:title_es', ns)
+    title_en = _get_text(entry, 'g:title_en', ns)
+    title_legacy = _get_text(entry, 'g:title', ns)  # opcional (fallback)
+
+    category = _get_text(entry, 'g:category', ns)
+    brand = _get_text(entry, 'g:brand', ns)
+    image_link = _get_text(entry, 'g:image_link', ns)
+    site = _get_text(entry, 'g:site', ns)
+    gender = _get_text(entry, 'g:gender', ns)
+    pack = _get_text(entry, 'g:pack', ns)
+    price = _get_text(entry, 'g:price', ns)
+    sale_price = _get_text(entry, 'g:sale_price', ns)
+    size = _get_text(entry, 'g:size', ns)
+    availability = _get_text(entry, 'g:availability', ns)
 
     produtos.append({
         "id": id_,
         "mpn": mpn,
-        "title": title,
+        "title_pt": title_pt,
+        "title_es": title_es,
+        "title_en": title_en,
+        "title": title_legacy,  # legacy para fallback
         "price": price,
         "sale_price": sale_price,
         "category": category,
@@ -106,7 +157,7 @@ def get_image_embedding(img_url, image_path):
             img = Image.open(image_path).convert('RGB')
         else:
             headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(img_url, headers=headers, timeout=10)
+            response = session.get(img_url, headers=headers, timeout=10)
             if "image" not in response.headers.get("Content-Type", ""):
                 print(f"❌ Ignorado (não é imagem): {img_url}")
                 return None
@@ -119,23 +170,6 @@ def get_image_embedding(img_url, image_path):
     except Exception as e:
         print(f"⚠️ Erro ao processar imagem {img_url}: {e}")
         return None
-
-# Helpers para categorias / exceção de Acessórios
-def _split_cat(cat):
-    return [c.strip() for c in cat.split(">")] if cat else []
-
-def _first_level(cat):
-    parts = _split_cat(cat)
-    return parts[0].casefold() if parts else ""
-
-def _is_acessorios_lista(categorias_validas):
-    # Exceção ativa se QUALQUER categoria válida começar por "Acessórios"
-    if not categorias_validas:
-        return False
-    for c in categorias_validas:
-        if _first_level(c) == "acessórios":
-            return True
-    return False
 
 # 🧠 Preparar embeddings com cache (versão original com cache)
 print("🧠 A preparar embeddings com cache...")
@@ -330,7 +364,7 @@ for p in produtos_validos:
         produtos_sem_sugestoes.append({
             "id": p["id"],
             "mpn": p["mpn"],
-            "title": p["title"],
+            "title": _build_title_obj(p),  # multi-idioma
             "category": p["category"],
             "brand": p["brand"],
             "site": p["site"],
@@ -353,9 +387,6 @@ for p in produtos_validos:
 saida_json = []
 vistos = set()
 
-def _is_instock(av):
-    return ((av or "").strip().lower() == "in stock")
-
 for produto in produtos_validos:
     mpn = produto["mpn"]
     if mpn in vistos:
@@ -376,7 +407,7 @@ for produto in produtos_validos:
     saida_json.append({
         "id": id_base,
         "mpn": mpn,
-        "title": produto["title"],
+        "title": _build_title_obj(produto),  # objeto {pt, es, en}
         "image": produto["image_link"],
         "gender": produto["gender"],
         "site": produto["site"],
@@ -411,7 +442,7 @@ headers = {
 }
 
 # JSON principal
-get_resp = requests.get(api_url, headers=headers)
+get_resp = session.get(api_url, headers=headers, timeout=30)
 sha = get_resp.json().get("sha") if get_resp.status_code == 200 else None
 with open(filename, "rb") as f:
     content = base64.b64encode(f.read()).decode()
@@ -422,7 +453,7 @@ payload = {
 }
 if sha:
     payload["sha"] = sha
-put_resp = requests.put(api_url, headers=headers, json=payload)
+put_resp = session.put(api_url, headers=headers, json=payload, timeout=30)
 if put_resp.status_code in [200, 201]:
     print("✅ JSON copiado para o GitHub com sucesso.")
 else:
@@ -436,7 +467,7 @@ log_filename = "produtos_sem_sugestoes.json"
 log_api_url = f"https://api.github.com/repos/{repo}/contents/{log_filename}"
 with open(log_filename, "rb") as f:
     log_content = base64.b64encode(f.read()).decode()
-log_get_resp = requests.get(log_api_url, headers=headers)
+log_get_resp = session.get(log_api_url, headers=headers, timeout=30)
 log_sha = log_get_resp.json().get("sha") if log_get_resp.status_code == 200 else None
 log_payload = {
     "message": "Atualizar log de produtos sem sugestões",
@@ -445,7 +476,7 @@ log_payload = {
 }
 if log_sha:
     log_payload["sha"] = log_sha
-log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload)
+log_put_resp = session.put(log_api_url, headers=headers, json=log_payload, timeout=30)
 if log_put_resp.status_code in [200, 201]:
     print("✅ Log de produtos sem sugestões enviado para o GitHub.")
 else:
