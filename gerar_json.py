@@ -271,8 +271,8 @@ for p in produtos_validos:
             "mpn": p["mpn"],
             "title": {
                 "pt": p["title_pt"],
-                "es": p["es"],
-                "en": p["en"]
+                "es": p["title_es"],
+                "en": p["title_en"]
             },
             "category": p["category"],
             "brand": p["brand"],
