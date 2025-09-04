@@ -270,9 +270,9 @@ for p in produtos_validos:
             "id": p["id"],
             "mpn": p["mpn"],
             "title": {
-                "pt": produto.get("title_pt", ""),
-                "es": produto.get("title_es", ""),
-                "en": produto.get("title_en", "")
+                "pt": p["title_pt"],
+                "es": p["es"],
+                "en": p["en"]
             },
             "category": p["category"],
             "brand": p["brand"],
