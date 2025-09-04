@@ -269,9 +269,11 @@ for p in produtos_validos:
         produtos_sem_sugestoes.append({
             "id": p["id"],
             "mpn": p["mpn"],
-            "title_pt": p.get("title_pt",""),
-            "title_es": p.get("title_es",""),
-            "title_en": p.get("title_en",""),
+            "title": {
+                "pt": produto.get("title_pt", ""),
+                "es": produto.get("title_es", ""),
+                "en": produto.get("title_en", "")
+            },
             "category": p["category"],
             "brand": p["brand"],
             "site": p["site"],
@@ -422,9 +424,11 @@ for produto in produtos_validos:
     saida_json.append({
         "id": id_base,
         "mpn": mpn,
-        "title_pt": produto.get("title_pt", ""),
-        "title_es": produto.get("title_es", ""),
-        "title_en": produto.get("title_en", ""),
+        "title": {
+            "pt": produto.get("title_pt", ""),
+            "es": produto.get("title_es", ""),
+            "en": produto.get("title_en", "")
+        },
         "image": produto["image_link"],
         "gender": produto["gender"],
         "site": produto["site"],
