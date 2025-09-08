@@ -249,7 +249,8 @@ for p in produtos_validos:
         if in_valid and is_acess:
             brand_ok = True
         else:
-            brand_ok = (cand_brand == brand_base)
+            #brand_ok = (cand_brand == brand_base)
+            brand_ok = True
 
         if not brand_ok:
             # ainda pode ir para fallback? (mantemos a mesma exceção para Acessórios)
