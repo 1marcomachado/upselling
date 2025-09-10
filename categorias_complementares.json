@@ -1,632 +1,768 @@
 {
   "Calçado > Trail > Sapatilhas": [
-    "Acessórios > Running > Meias",
     "Roupa > Running > Calções",
     "Roupa > Running > T-Shirts",
+    "Acessórios > Running > Meias",
+    "Calçado > Running > Sapatilhas",
     "Roupa > Trail > Calções",
     "Roupa > Trail > T-Shirts"
+  ],
+  "Roupa > Futebol > Camisolas": [
+    "Roupa > Futebol > Calças",
+    "Roupa > Futebol > Calções",
+    "Roupa > Futebol > Camisolas",
+    "Calçado > Futebol > Chuteiras"
+  ],
+  "Roupa > Camisolas com Capuz": [
+    "Roupa > Lifestyle > T-Shirts",
+    "Roupa > Lifestyle > Casacos",
+    "Acessórios > Lifestyle > Bonés",
+    "Acessórios > Lifestyle > Chapéus",
+    "Acessórios > Lifestyle > Bolsa Tiracolo",
+    "Roupa > Lifestyle > Calças",
+    "Roupa > Lifestyle > Calças de Ganga",
+    "Roupa > Calças",
+    "Roupa > Calças de Ganga",
+    "Roupa > Camisolas com Capuz"
   ],
   "Roupa > T-Shirts": [
     "Acessórios > Bonés",
     "Calçado > Lifestyle > Sapatilhas",
     "Calçado > Sapatilhas",
     "Roupa > Calções",
-    "Roupa > Lifestyle > Calções"
-  ],
-  "Roupa > Futebol > Camisolas de Seleções": [
-    "Roupa > Calças"
-  ],
-  "Roupa > Futebol > Camisolas": [
-    "Roupa > Basquetebol > Calças",
-    "Roupa > Calças",
-    "Roupa > Calças de Ganga",
-    "Roupa > Fitness & Training > Calças",
-    "Roupa > Futebol > Calças",
-    "Roupa > Lifestyle > Calças",
-    "Roupa > Lifestyle > Calças de Ganga",
-    "Roupa > Running > Calças"
-  ],
-  "Acessórios > Canecas": [
-    "Acessórios > Autocolantes"
-  ],
-  "Roupa > Camisolas com Capuz": [
-    "Roupa > Calças",
-    "Roupa > Calças de Ganga",
-    "Roupa > Lifestyle > Calças",
-    "Roupa > Lifestyle > Calças de Ganga",
-    "Roupa > Lifestyle > T-Shirts"
+    "Roupa > Lifestyle > Calções",
+    "Roupa > T-Shirts"
   ],
   "Roupa > Futebol > Casacos de Seleções": [
+    "Roupa > Futebol > Camisolas de Seleções",
+    "Roupa > Futebol > Calções",
+    "Acessórios > Futebol ",
     "Roupa > Calças",
-    "Roupa > Futebol > Camisolas de Seleções"
+    "Roupa > Futebol > Casacos de Seleções",
+    "Roupa > Futebol > Calças"
+  ],
+  "Roupa > Futebol > Camisolas de Seleções": [
+    "Roupa > Calças",
+    "Roupa > Futebol > Camisolas de Seleções",
+    "Acessórios > Futebol "
   ],
   "Acessórios > Fitness & Training > Meias": [
-    "Calçado > Fitness & Training > Sapatilhas"
+    "Calçado > Fitness & Training > Sapatilhas",
+    "Roupa > Fitness & Training > T-shirts",
+    "Roupa > Fitness & Training > Leggins",
+    "Roupa > Fitness & Training > Camisolas",
+    "Roupa > Fitness & Training > Sutiã Desportivo",
+    "Acessórios > Fitness & Training "
   ],
   "Roupa > Futebol > Calções de Futebol": [
     "Calçado > Futebol > Sapatilhas",
     "Roupa > Futebol > T-Shirts"
   ],
   "Roupa > Fitness & Training > Camisolas": [
-    "Roupa > Fitness & Training > Calças",
+    "Roupa > Fitness & Training > T-Shirts",
+    "Roupa > Fitness & Training > Leggins",
     "Roupa > Fitness & Training > Calções",
-    "Roupa > Fitness & Training > T-Shirts"
+    "Roupa > Fitness & Training > Camisolas",
+    "Roupa > Fitness & Training > Calças",
+    "Calçado > Fitness & Training > Sapatilhas",
+    "Roupa > Fitness & Training > Sutiã Desportivo"
   ],
   "Acessórios > Mochilas": [
+    "Acessórios > Canetas",
     "Acessórios > Cadeados",
-    "Acessórios > Carteiras",
-    "Acessórios > Estojos",
+    "Acessórios > Pins",
     "Acessórios > Livros",
     "Acessórios > Necessaires",
-    "Acessórios > Pins",
+    "Acessórios > Carteiras",
+    "Acessórios > Mochilas",
     "Acessórios > Porta-Cartões",
     "Acessórios > Porta-Moedas",
-    "Acessórios > Porta-chaves"
+    "Acessórios > Porta-chaves",
+    "Acessórios > Estojos"
   ],
   "Acessórios > Voleibol > Meias": [
-    "Acessórios > Voleibol > Manguitos"
-  ],
-  "Acessórios > Brincos": [
-    "Acessórios > Anéis",
-    "Acessórios > Colares",
-    "Acessórios > Medalhões",
-    "Acessórios > Pulseiras"
+    "Acessórios > Voleibol > Joalheiras",
+    "Acessórios > Voleibol > Meias",
+    "Clçado > Voleibol > Sapatilhas",
+    "Acessórios > Voleibol > Manguitos",
+    "Acessórios > Voleibol > Cotoveleira"
   ],
   "Calçado > Sandálias": [
+    "Roupa > Running > Vestidos",
     "Roupa > Saias",
+    "Acessórios > Lifestyle > Meias",
+    "Acessórios > Lifestyle > Limpeza de Calçado",
+    "Acessórios > Lifestyle > Necessaires",
+    "Acessórios > Lifestyle > Porta-moedas",
     "Roupa > Tops",
+    "Acessórios > Lifestylçe > Pins",
+    "Acessórios > Lifestyle > Bolsas a Tiracolo",
+    "Acessórios > Lifestyle > Malas",
+    "Calçado > Sandálias",
     "Roupa > Vestidos"
   ],
   "Roupa > Casacos": [
     "Calçado > Botas",
     "Roupa > Calças",
     "Roupa > Calças de Ganga",
-    "Roupa > Camisolas",
-    "Roupa > Camisolas com Capuz",
-    "Roupa > Lifestyle > Calças",
-    "Roupa > Lifestyle > Calças de Ganga"
-  ],
-  "Roupa > Natação > Fatos de Banho": [
-    "Acessórios > Natação > Palas",
-    "Acessórios > Natação > Toucas",
-    "Acessórios > Natação > Óculos de Natação",
-    "Calçado > Natação > Chinelos"
-  ],
-  "Acessórios > Óculos de Sol": [
-    "Acessórios > Bonés",
-    "Roupa > Lifestyle > T-Shirts",
-    "Roupa > T-Shirts"
-  ],
-  "Roupa > Natação > Calções de Natação": [
-    "Acessórios > Natação > Palas",
-    "Calçado > Natação > Chinelos"
-  ],
-  "Roupa > Calças de Ganga": [
-    "Acessórios > Cintos",
-    "Acessórios > Meias",
     "Calçado > Sapatilhas",
     "Roupa > Camisolas",
     "Roupa > Camisolas com Capuz",
+    "Roupa > Lifestyle > Calças",
+    "Roupa > Lifestyle > Calças de Ganga",
+    "Roupa > Casacos"
+  ],
+  "Roupa > Natação > Fatos de Banho": [
+    "Calçado > Natação > Barbatanas",
+    "Acessórios > Natação > Toucas",
+    "Acessórios > Natação > Óculos de Natação",
+    "Calçado > Natação > Chinelos",
+    "Acessórios > Natação > Tampões Ouvidos",
+    "Acessórios > Natação > Toalhas",
+    "Acessórios > Natação > Palas",
+    "Calçado > Natação > Chinelos",
+    "Acessórios > Natação > Molas de nariz"
+  ],
+  "Acessórios > Óculos de Sol": [
+    "Acessórios > Lifestyle > Chapéus",
+    "Acessórios > Bonés",
     "Roupa > Lifestyle > T-Shirts",
-    "Roupa > T-Shirts"
+    "Roupa > T-Shirts",
+    "Carteira",
+    "Porta-moedas"
+  ],
+  "Roupa > Natação > Calções de Natação": [
+    "Acessórios > Natação > Molas de nariz",
+    "Acessórios > Natação > Tampões Ouvidos",
+    "Acessórios > Natação > Toalhas",
+    "Acessórios > Natação > Palas",
+    "Calçado > Natação > Chinelos",
+    "Calçado > Natação > Barbatanas",
+    "Calçado > Natação > Toucas"
+  ],
+  "Roupa > Calças de Ganga": [
+    "Acessórios > Cintos",
+    "Calçado > Sapatilhas",
+    "Acessórios > Meias",
+    "Roupa > Camisolas",
+    "Roupa > Camisolas com Capuz",
+    "Roupa > Lifestyle > T-Shirts",
+    "Roupa > T-Shirts",
+    "Roupa > Calças de Ganga",
+    "Roupa > Calças "
   ],
   "Acessórios > Futebol > Bonés": [
-    "Acessórios > Futebol > Bolas",
-    "Roupa > Futebol > Camisolas",
     "Roupa > Futebol > Camisolas de Seleções",
+    "Acessórios > Futebol > Bolas",
+    "Acessórios > Futebol > Mochilas",
     "Roupa > Futebol > Casacos de Seleções",
+    "Acessórios > Futebol > Polos",
+    "Roupa > Futebol > Camisolas",
     "Roupa > Futebol > Fatos de Treino",
+    "Acessórios > Futebol > Saco",
     "Roupa > Futebol > T-Shirts"
   ],
   "Calçado > Natação > Chinelos": [
     "Roupa > Natação > Calções de Natação",
+    "Calçado > Natação > Toucas",
+    "Calçado > Natação > Toucas",
+    "Acessórios > Natação > Toalhas",
+    "Calçado > Natação > Barbatanas",
+    "Acessórios > Natação > Molas de nariz",
+    "Acessórios > Natação > Tampões Ouvidos",
     "Roupa > Natação > Fatos de Banho"
   ],
   "Roupa > Basquetebol > Casacos": [
-    "Acessórios > Basquetebol > Bolas",
+    "Roupa > Basquetebol > Calções",
+    "Roupa > Basquetebol > Camisolas de Alças",
+    "Roupa > Basquetebol > Camisolas com Capuz",
     "Calçado > Basquetebol > Sapatilhas",
+    "Roupa > Basquetebol > T-shirts",
+    "Acessórios > Basquetebol > Bolas",
     "Roupa > Basquetebol > Calças",
-    "Roupa > Basquetebol > Calções"
+    "Roupa > Basquetebol > Casacos"
   ],
   "Roupa > Futebol > Camisolas de Clubes": [
+    "Roupa > Futebol > Calções de Futebol",
     "Acessórios > Futebol > Bonés",
-    "Roupa > Futebol > Calções de Futebol"
+    "Roupa > Futebol > Camisolas de Clubes",
+    "Roupa > Futebol > Casacos de Clubes",
+    "Roupa > Futebol > Equipamentos de Futebol",
+    "Roupa > Futebol > fatos de Treino",
+    "Roupa > Futebol > Polos"
   ],
   "Roupa > Saias": [
-    "Calçado > Sandálias",
     "Calçado > Sapatilhas",
-    "Roupa > Tops"
+    "Roupa > Camisolas com Capuz",
+    "Roupa > T-shirts",
+    "Calçado > Sandálias",
+    "Roupa > Tops",
+    "Roupa > Saias",
+    "Roupa > Saias",
+    "Roupa > calças de ganga",
+    "Roupa > calças "
   ],
   "Calçado > Sapatilhas": [
+    "Acessórios > Palmilhas",
+    "Acessórios > Limpeza de Calçado",
     "Acessórios > Cordões",
     "Acessórios > Meias",
-    "Acessórios > Palmilhas"
+    "Calçado > Sapatilhas",
+    "Roupa >  Calças de Ganga ",
+    "Roupa >  Camisolas",
+    "Roupa >  Camisolas de Capuz",
+    "Roupa >  T-shirts",
+    "Roupa >  Casacos"
   ],
   "Roupa > Futebol > Casacos": [
     "Roupa > Futebol > Calças",
     "Roupa > Futebol > Camisolas",
     "Roupa > Futebol > Camisolas com Capuz",
     "Roupa > Futebol > Camisolas de Clubes",
-    "Roupa > Futebol > Camisolas de Seleções"
+    "Roupa > Futebol > Camisolas de Seleções",
+    "Roupa > Futebol > Casacos",
+    "Acessórios > Bonés"
   ],
   "Acessórios > Lifestyle > Cintos": [
     "Roupa > Calças",
     "Roupa > Calças de Ganga",
-    "Roupa > Camisas",
-    "Roupa > Lifestyle > Calças",
-    "Roupa > Lifestyle > Calças de Ganga",
-    "Roupa > Lifestyle > T-Shirts",
-    "Roupa > T-Shirts"
+    "Roupa  > Calças",
+    "Roupa > Calças de Ganga",
+    "Roupa > T-Shirts",
+    "Roupa > Casacos",
+    "Roupa > T-Shirts",
+    "Acessórios > Lifestyle > Cintos"
   ],
   "Acessórios > Natação > Óculos de Natação": [
-    "Acessórios > Natação > Molas de Nariz",
-    "Acessórios > Natação > Sprays",
-    "Acessórios > Natação > Tampões de Ouvidos",
     "Acessórios > Natação > Toucas",
-    "Roupa > Natação > Calções de Competição",
-    "Roupa > Natação > Calções de Natação",
     "Roupa > Natação > Fatos de Banho",
-    "Roupa > Natação > Fatos de Competição"
+    "Acessórios > Natação > Toalhas",
+    "Roupa > Natação > Calções de Competição",
+    "Acessórios > Natação > Sprays",
+    "Roupa > Natação > Fatos de Competição",
+    "Acessórios > Natação > Molas de Nariz",
+    "calçado > Natação > Sapatos",
+    "Roupa > Natação > Calções de Natação",
+    "calçado > Natação > Chinelos",
+    "Acessórios > Natação > Óculos de Natação",
+    "Acessórios > Natação > Tampões de Ouvidos"
   ],
   "Acessórios > Bonés": [
     "Acessórios > Porta-chaves",
     "Acessórios > Óculos de Sol",
+    "Acessórios > Porta-moedas",
+    "Acessórios > Relógios",
     "Calçado > Lifestyle > Sapatilhas",
     "Calçado > Sapatilhas",
     "Roupa > Lifestyle > T-Shirts",
-    "Roupa > T-Shirts"
-  ],
-  "Acessórios > Vários desportos > Meias": [
-    "Calçado > Basquetebol > Sapatilhas",
-    "Calçado > Fitness & Training > Sapatilhas",
-    "Calçado > Futebol > Sapatilhas",
-    "Calçado > Futsal > Sapatilhas",
-    "Calçado > Lifestyle > Sapatilhas",
-    "Calçado > Padel & Ténis > Sapatilhas",
-    "Calçado > Running > Sapatilhas",
-    "Calçado > Sapatilhas",
-    "Calçado > Trail > Sapatilhas",
-    "Roupa > Basquetebol > Calções",
-    "Roupa > Calções",
-    "Roupa > Fitness & Training > Calções",
-    "Roupa > Futebol > Calções",
-    "Roupa > Futebol > Calções de Futebol",
-    "Roupa > Lifestyle > Calções",
-    "Roupa > Natação > Calções de Competição",
-    "Roupa > Natação > Calções de Natação",
-    "Roupa > Running > Calções",
-    "Roupa > Trail > Calções",
-    "Roupa > Vários desportos > Calções"
+    "Roupa > T-Shirts",
+    "Roupa > Calças de Ganga",
+    "Roupa > Calças ",
+    "Roupa > Camisolas",
+    "Roupa > Camisolas com Capuz"
   ],
   "Calçado > Futsal > Sapatilhas": [
-    "Acessórios > Futebol > Caneleiras",
-    "Acessórios > Futebol > Meias",
-    "Acessórios > Futsal > Bolas",
+    "Acessórios > Futebol > Meias ",
+    "Acessórios > Futsal > Bolas ",
+    "Acessórios > Futebol > Caneleiras ",
     "Roupa > Calções",
     "Roupa > Futebol > Calções",
     "Roupa > Futebol > Calções de Futebol",
-    "Roupa > Futebol > T-Shirts"
+    "Roupa > Futebol > T-Shirts",
+    "Calçado > Futsal > Sapatilhas"
   ],
   "Calçado > Futebol > Sapatilhas": [
-    "Acessórios > Futebol > Bolas",
-    "Acessórios > Futebol > Caneleiras",
-    "Acessórios > Futebol > Meias"
+    "Acessórios > Futebol > Meias ",
+    "Acessórios > Futebol > Caneleiras ",
+    "Acessórios > Futebol > Bolas ",
+    "Calçado > Futebol > Sapatilhas",
+    "Roupa > Futebol > Calções",
+    "Roupa > Futebol > Camisolas",
+    "Roupa > Futebol > Casacos",
+    "Roupa > Futebol > Casacos",
+    "Roupa > Futebol > Calções de Futebol"
   ],
   "Roupa > Camisolas": [
-    "Acessórios > Bonés",
-    "Acessórios > Chapéus",
-    "Acessórios > Meias",
+    "Roupa > T-shirts",
     "Calçado > Sapatilhas",
-    "Roupa > Calças",
+    "Acessórios > Meias",
+    "Acessórios > Bonés",
     "Roupa > Calças de Ganga",
+    "Roupa > Lifestyle > Casacos",
     "Roupa > Lifestyle > Calças",
-    "Roupa > Lifestyle > Calças de Ganga"
+    "Roupa > Lifestyle > Calças de Ganga",
+    "Acessórios > Chapéus",
+    "Roupa > Calças",
+    "Roupa > Camisolas"
   ],
   "Roupa > Running > Casacos": [
-    "Calçado > Running > Sapatilhas",
+    "Roupa > Running > Camisolas de Alças",
+    "Roupa > Running > T-shirt",
     "Roupa > Running > Calções",
+    "Calçado > Running > Sapatilhas",
+    "Acessórios > Running > meias",
+    "Roupa > trail > Calções",
+    "Roupa > trail > Camisolas de Alças",
+    "Roupa > trail > Casacos",
+    "Calçado > trail > Sapatilhas",
+    "Roupa > trail > T-shirt",
+    "Roupa > Running > Casacos",
     "Roupa > Running > Camisolas"
   ],
   "Roupa > Natação > Calções de Competição": [
+    "Acessórios > Natação > Toalhas",
     "Acessórios > Natação > Molas de Nariz",
+    "Roupa > Natação > Fatos de Competição",
+    "calçado > Natação > Chinelos",
+    "calçado > Natação > Sapatos",
     "Acessórios > Natação > Tampões de Ouvidos",
-    "Roupa > Natação > Fatos de Competição"
+    "Roupa > Natação > Calções de Competição"
   ],
   "Roupa > Lifestyle > Calças de Ganga": [
-    "Acessórios > Cintos",
-    "Acessórios > Meias",
     "Calçado > Sapatilhas",
+    "Acessórios > Meias",
+    "Acessórios > Cintos",
     "Roupa > Camisolas",
     "Roupa > Camisolas com Capuz",
     "Roupa > Lifestyle > T-Shirts",
-    "Roupa > T-Shirts"
+    "Roupa > T-Shirts",
+    "Roupa > Lifestyle > Calças de Ganga",
+    "Roupa > Casacos",
+    "Calçado > Botas",
+    "Roupa > Lifestyle > Calças "
   ],
   "Acessórios > Natação > Toucas": [
-    "Acessórios > Natação > Molas de Nariz",
-    "Acessórios > Natação > Sprays",
-    "Acessórios > Natação > Tampões de Ouvidos",
     "Acessórios > Natação > Óculos de Natação",
-    "Roupa > Natação > Calções de Competição",
-    "Roupa > Natação > Calções de Natação",
+    "Acessórios > Natação > Sprays",
+    "Acessórios > Natação > Toalhas",
     "Roupa > Natação > Fatos de Banho",
-    "Roupa > Natação > Fatos de Competição"
+    "Roupa > Natação > Fatos de Competição",
+    "calçado > Natação > Chinelos",
+    "Roupa > Natação > Calções de Natação",
+    "Acessórios > Natação > Molas de Nariz",
+    "Acessórios > Natação > Tampões de Ouvidos",
+    "Roupa > Natação > Calções de Competição",
+    "calçado > Natação > Sapatos",
+    "Acessórios > Natação > Toucas"
   ],
   "Acessórios > Futebol > Meias de Futebol": [
-    "Acessórios > Futebol > Caneleiras",
     "Calçado > Futebol > Chuteiras",
+    "Acessórios > Futebol > Caneleiras ",
+    "Calçado > Futebol > Sapatilhas",
+    "Acessórios > Futebol > Meias de Futebol",
+    "Roupa > Futebol > Calções",
+    "Roupa > Futebol > T-shirts",
     "Calçado > Futebol > Sapatilhas"
   ],
   "Acessórios > Futebol > Meias": [
-    "Acessórios > Futebol > Caneleiras",
     "Calçado > Futebol > Chuteiras",
+    "Acessórios > Futebol > Caneleiras ",
+    "Calçado > Futebol > Sapatilhas",
+    "Acessórios > Futebol > Meias",
+    "Roupa > Futebol > Calções",
+    "Roupa > Futebol > T-shirts",
     "Calçado > Futebol > Sapatilhas"
   ],
   "Acessórios > Autocolantes": [
     "Acessórios > Canecas",
+    "Acessórios > Tote Bags",
+    "Acessórios > Pins",
     "Acessórios > Dados",
-    "Acessórios > Pins"
-  ],
-  "Acessórios > Anéis": [
-    "Acessórios > Brincos",
-    "Acessórios > Colares",
-    "Acessórios > Pulseiras"
+    "Acessórios > Saca-Rolhas",
+    "Acessórios > Autocolantes",
+    "Acessórios > Carteiras",
+    "Acessórios > Porta-moedas"
   ],
   "Roupa > Calções": [
-    "Acessórios > Bonés",
     "Acessórios > Cintos",
+    "Acessórios > meias",
+    "Acessórios > Bonés",
     "Calçado > Chinelos",
+    "Roupa > Camisas",
     "Calçado > Lifestyle > Sapatilhas",
     "Calçado > Sapatilhas",
-    "Roupa > Camisas",
+    "Roupa > Casacos",
     "Roupa > Lifestyle > T-Shirts",
-    "Roupa > T-Shirts"
+    "Roupa > T-Shirts",
+    "Roupa > Calções",
+    "Roupa > Calças de Ganga",
+    "Roupa > Calças"
   ],
   "Roupa > Trail > T-Shirts": [
+    "Roupa > trail > Camisolas de Alças",
+    "Roupa > trail > Casacos",
+    "Roupa > trail > T-shirt",
     "Acessórios > Running > Meias",
     "Calçado > Running > Sapatilhas",
     "Calçado > Trail > Sapatilhas",
     "Roupa > Running > Calções",
-    "Roupa > Trail > Calções"
+    "Roupa > Trail > Calções",
+    "Roupa > Fitness e Training> Sutiã Desportivo"
   ],
   "Roupa > Tops": [
     "Calçado > Chinelos",
-    "Calçado > Sandálias",
-    "Calçado > Sapatilhas",
     "Roupa > Calças de Ganga",
-    "Roupa > Saias"
-  ],
-  "Acessórios > Natação > Meias": [
-    "Calçado > Basquetebol > Sapatilhas",
-    "Calçado > Fitness & Training > Sapatilhas",
-    "Calçado > Futebol > Sapatilhas",
-    "Calçado > Futsal > Sapatilhas",
-    "Calçado > Lifestyle > Sapatilhas",
-    "Calçado > Padel & Ténis > Sapatilhas",
-    "Calçado > Running > Sapatilhas",
+    "Roupa > Saias",
+    "Calçado > Sandálias",
+    "Calçado > Saias",
     "Calçado > Sapatilhas",
-    "Calçado > Trail > Sapatilhas",
-    "Roupa > Basquetebol > Calções",
-    "Roupa > Calções",
-    "Roupa > Fitness & Training > Calções",
-    "Roupa > Futebol > Calções",
-    "Roupa > Futebol > Calções de Futebol",
-    "Roupa > Lifestyle > Calções",
-    "Roupa > Natação > Calções de Competição",
-    "Roupa > Natação > Calções de Natação",
-    "Roupa > Running > Calções",
-    "Roupa > Trail > Calções",
-    "Roupa > Vários desportos > Calções"
+    "Roupa > tops"
   ],
   "Roupa > Trail > Calções": [
+    "Roupa > trail > Camisolas de Alças",
+    "Roupa > trail > Casacos",
+    "Roupa > trail > T-shirt",
     "Acessórios > Running > Meias",
     "Calçado > Running > Sapatilhas",
-    "Calçado > Trail > Sapatilhas",
     "Roupa > Running > Calções",
+    "Roupa > Trail > Calções",
+    "Calçado > Trail > Sapatilhas",
     "Roupa > Running > T-Shirts",
     "Roupa > Trail > Calções"
-  ],
-  "Acessórios > Pulseiras": [
-    "Acessórios > Anéis",
-    "Acessórios > Brincos",
-    "Acessórios > Colares"
   ],
   "Roupa > Futebol > Casacos de Clubes": [
     "Roupa > Futebol > Camisolas com Capuz",
     "Roupa > Futebol > Camisolas de Clubes",
-    "Roupa > Futebol > Camisolas de Seleções"
+    "Roupa > Futebol > Camisolas de Seleções",
+    "Roupa > Futebol > Casacos de Clubes",
+    "Roupa > Futebol > Polos",
+    "Calçado > Sapatilhas",
+    "Roupa > Futebol > Fato de treino"
   ],
   "Roupa > Futebol > T-Shirts": [
-    "Acessórios > Futebol > Bonés",
-    "Acessórios > Futebol > Meias",
-    "Roupa > Futebol > Calções",
+    "Roupa > Futebol > Casacos de Clubes",
     "Roupa > Futebol > Camisolas de Clubes",
-    "Roupa > Futebol > Casacos de Clubes"
+    "Roupa > Futebol > Calções",
+    "Acessórios > Futebol > Meias",
+    "Roupa > Futebol > T-Shirts",
+    "Roupa > Futebol > Fatos de treino",
+    "Roupa > Leggins",
+    "Roupa > Futebol >Fatos de treino",
+    "Roupa > Futebol > Casacos",
+    "Roupa > Futebol > Camisolas",
+    "Roupa > Futebol > Calções de Futebol",
+    "Roupa > Futebol > Calças",
+    "Calçado > Futebol > Chuteiras",
+    "Acessórios > Futebol > Bonés",
+    "Calçado > Futebol > Sapatilhas"
   ],
   "Roupa > Futebol > Camisolas com Capuz": [
+    "Roupa > Futebol > Camisolas com Capuz",
     "Roupa > Calças",
-    "Roupa > Futebol > Calças"
+    "Roupa > Futebol > Calças",
+    "Roupa > Futebol > Camisolas",
+    "Calçado > Futebol > Sapatilhas",
+    "Roupa > Futebol > T-shirt",
+    "Roupa > Futebol > Fatos de treino"
   ],
   "Roupa > Basquetebol > Calças": [
-    "Acessórios > Basquetebol > Bolas",
-    "Calçado > Sapatilhas",
     "Roupa > Basquetebol > Casacos",
-    "Roupa > Basquetebol > T-Shirts"
-  ],
-  "Acessórios > Vários desportos > Mochilas": [
-    "Acessórios > Anéis",
-    "Acessórios > Autocolantes",
-    "Acessórios > Basquetebol > Bolas",
-    "Acessórios > Bolsas a Tiracolo",
-    "Acessórios > Bolsas de Cintura",
-    "Acessórios > Bonés",
-    "Acessórios > Boxers",
-    "Acessórios > Brincos",
-    "Acessórios > Cadeados",
-    "Acessórios > Canecas",
-    "Acessórios > Carteiras",
-    "Acessórios > Chapéus",
-    "Acessórios > Cintos",
-    "Acessórios > Colares",
-    "Acessórios > Conjuntos",
-    "Acessórios > Cordões",
-    "Acessórios > Cuecas",
-    "Acessórios > Dados",
-    "Acessórios > Estojos",
-    "Acessórios > Fitness & Training > Bolsas",
-    "Acessórios > Fitness & Training > Meias",
-    "Acessórios > Fitness & Training > Outros Acessórios",
-    "Acessórios > Fitness & Training > Sacos",
-    "Acessórios > Formas",
-    "Acessórios > Futebol > Agulhas",
-    "Acessórios > Futebol > Bolas",
-    "Acessórios > Futebol > Bonés",
-    "Acessórios > Futebol > Caneleiras",
-    "Acessórios > Futebol > Chapéus",
-    "Acessórios > Futebol > Gorros",
-    "Acessórios > Futebol > Luvas",
-    "Acessórios > Futebol > Manguitos",
-    "Acessórios > Futebol > Meias",
-    "Acessórios > Futebol > Meias de Futebol",
-    "Acessórios > Futebol > Outros Acessórios",
-    "Acessórios > Futebol > Pitões",
-    "Acessórios > Futebol > Sacos",
-    "Acessórios > Futsal > Bolas",
-    "Acessórios > Gorros",
-    "Acessórios > Guarda-chuvas",
-    "Acessórios > Lenços",
-    "Acessórios > Lifestyle > Cintos",
-    "Acessórios > Limpeza Calçado",
-    "Acessórios > Livros",
-    "Acessórios > Luvas",
-    "Acessórios > Malas",
-    "Acessórios > Medalhões",
-    "Acessórios > Meias",
-    "Acessórios > Mochilas",
-    "Acessórios > Máquinas Fotográficas",
-    "Acessórios > Música",
-    "Acessórios > Natação > Barbatanas",
-    "Acessórios > Natação > Meias",
-    "Acessórios > Natação > Molas de Nariz",
-    "Acessórios > Natação > Palas",
-    "Acessórios > Natação > Sprays",
-    "Acessórios > Natação > Tampões de Ouvidos",
-    "Acessórios > Natação > Toucas",
-    "Acessórios > Natação > Óculos de Natação",
-    "Acessórios > Necessaires",
-    "Acessórios > Outros Acessórios",
-    "Acessórios > Padel & Ténis > Bolas",
-    "Acessórios > Padel & Ténis > Fitas",
-    "Acessórios > Padel & Ténis > Overgrips",
-    "Acessórios > Padel & Ténis > Pulsos",
-    "Acessórios > Palmilhas",
-    "Acessórios > Pins",
-    "Acessórios > Porta-Cartões",
-    "Acessórios > Porta-Moedas",
-    "Acessórios > Porta-chaves",
-    "Acessórios > Pulseiras",
-    "Acessórios > Running > Meias",
-    "Acessórios > Sacos",
-    "Acessórios > Skate > Lixas",
-    "Acessórios > Skate > Outros Acessórios",
-    "Acessórios > Skate > Parafusos",
-    "Acessórios > Voleibol > Joelheiras",
-    "Acessórios > Voleibol > Manguitos",
-    "Acessórios > Voleibol > Meias",
-    "Acessórios > Vários desportos > Meias",
-    "Acessórios > Vários desportos > Outros Acessórios",
-    "Acessórios > Vários desportos > Pulsos",
-    "Acessórios > Óculos de Sol",
-    "Calçado > Basquetebol > Sapatilhas",
-    "Calçado > Fitness & Training > Sapatilhas",
-    "Calçado > Futebol > Sapatilhas",
-    "Calçado > Futsal > Sapatilhas",
-    "Calçado > Lifestyle > Sapatilhas",
-    "Calçado > Padel & Ténis > Sapatilhas",
-    "Calçado > Running > Sapatilhas",
     "Calçado > Sapatilhas",
-    "Calçado > Trail > Sapatilhas",
+    "Acessórios > Basquetebol > Bolas",
+    "Roupa > Basquetebol > Calças",
     "Roupa > Basquetebol > T-Shirts",
-    "Roupa > Fitness & Training > T-Shirts",
-    "Roupa > Futebol > T-Shirts",
-    "Roupa > Lifestyle > T-Shirts",
-    "Roupa > Running > T-Shirts",
-    "Roupa > T-Shirts",
-    "Roupa > Trail > T-Shirts"
+    "Calçado > Basquetebol > Sapatilhas",
+    "Roupa > Basquetebol > Camisolas de Alças",
+    "Roupa > Basquetebol > Calções"
   ],
   "Acessórios > Running > Meias": [
     "Calçado > Running > Sapatilhas",
     "Calçado > Trail > Sapatilhas",
     "Roupa > Running > Calções",
-    "Roupa > Trail > Calções"
+    "Roupa > Trail > Calções",
+    "Acessórios > Running > Meias",
+    "Roupa > Trail > T-shirts",
+    "Roupa > Running > T-shirts",
+    "Roupa > Running > Leggins",
+    "Roupa > Running > Camisolas",
+    "Roupa > Running > Camisolas de Alças"
   ],
   "Roupa > Futebol > Polos": [
-    "Calçado > Futebol > Sapatilhas",
     "Roupa > Futebol > Calças",
+    "Roupa > Futebol > Casacos de Clubes",
     "Roupa > Futebol > Camisolas de Clubes",
-    "Roupa > Futebol > Casacos de Clubes"
+    "Roupa > Futebol > Polos",
+    "Calçado > Futebol > Sapatilhas",
+    "Acessórios > Futebol >"
   ],
   "Roupa > Running > Calções": [
     "Calçado > Running > Sapatilhas",
     "Calçado > Trail > Sapatilhas",
+    "Roupa > Trail > T-Shirts",
     "Roupa > Running > T-Shirts",
-    "Roupa > Trail > T-Shirts"
+    "Acessórios > Running > Meias",
+    "Roupa > Running > Leggins",
+    "Roupa > Running > Camisolas",
+    "Roupa > Running > Camisolas de Alças",
+    "Roupa > Running > Calções"
   ],
   "Roupa > Fitness & Training > T-Shirts": [
-    "Calçado > Fitness & Training > Sapatilhas",
-    "Roupa > Fitness & Training > Calções",
+    "Roupa > Fitness & Training > T-Shirts",
     "Roupa > Fitness & Training > Sutiã Desportivo",
-    "Roupa > Fitness & Training > T-Shirts"
+    "Roupa > Fitness & Training > Leggins",
+    "Acessórios  > Fitness & Training > Meias",
+    "Roupa > Fitness & Training > Camisolas",
+    "Roupa > Fitness & Training > Camisolas de Alças",
+    "Roupa > Fitness & Training > Meias",
+    "Acessórios  > Fitness & Training > Sacos",
+    "Roupa > Fitness & Training > Calções",
+    "Roupa > Fitness & Training > Calças"
   ],
   "Roupa > Running > Calças": [
     "Roupa > Running > Camisolas",
-    "Roupa > Running > T-Shirts"
+    "Roupa > Running > T-Shirts",
+    "Calçado > Running > Sapatilhas",
+    "Calçado > Trail > Sapatilhas",
+    "Roupa > Trail > T-Shirts",
+    "Acessórios > Running > Meias",
+    "Roupa > Running > Leggins",
+    "Roupa > Running > Camisolas de Alças",
+    "Roupa > Running > Calções"
   ],
   "Roupa > Calças": [
-    "Acessórios > Bolsas de Cintura",
-    "Acessórios > Boxers",
     "Acessórios > Cintos",
+    "Acessórios > Boxers",
+    "Acessórios > Bolsas de Cintura",
     "Calçado > Sapatilhas",
+    "Roupa > Calças",
     "Roupa > Camisolas",
     "Roupa > Camisolas com Capuz",
-    "Roupa > Lifestyle > T-Shirts"
+    "Roupa > Lifestyle > T-Shirts",
+    "Roupa > T-Shirts",
+    "Calçado > Botas",
+    "Roupa > Casacos",
+    "Roupa > Calças de Ganga"
   ],
   "Roupa > Fitness & Training > Calções": [
-    "Calçado > Fitness & Training > Sapatilhas",
-    "Roupa > Fitness & Training > T-Shirts"
-  ],
-  "Roupa > Fitness & Training > Calças": [
+    "Roupa > Fitness & Training > Leggins",
+    "Acessórios > Fitness & Training > Garrafas",
+    "Roupa > Fitness & Training > Camisolas de Alças",
+    "Acessórios > Fitness & Training >  Bolsas",
+    "Roupa > Fitness & Training > Calções",
+    "Acessórios  > Fitness & Training > Sacos",
+    "Roupa > Fitness & Training > Calças",
     "Roupa > Fitness & Training > Camisolas",
-    "Roupa > Fitness & Training > T-Shirts"
+    "Roupa > Fitness & Training > Meias",
+    "Roupa > Fitness & Training > T-Shirts",
+    "Calçado > Fitness & Training > Sapatilhas"
   ],
   "Acessórios > Boxers": [
     "Acessórios > Meias",
     "Roupa > Lifestyle > T-Shirts",
-    "Roupa > T-Shirts"
+    "Roupa > T-Shirts",
+    "Acessórios > Boxers",
+    "Calçado > Chinelos > Hot Potatoes",
+    "Calçado > Chinelos > Gant"
   ],
   "Roupa > Basquetebol > T-Shirts": [
     "Acessórios > Basquetebol > Bolas",
+    "Roupa > Basquetebol > T-Shirts",
     "Calçado > Basquetebol > Sapatilhas",
-    "Roupa > Basquetebol > Calções"
+    "Roupa > Basquetebol > Calções",
+    "Roupa > Basquetebol > Casacos",
+    "Roupa > Basquetebol > Calças"
   ],
   "Roupa > Basquetebol > Calções": [
+    "Roupa > Basquetebol > T-Shirts",
     "Calçado > Basquetebol > Sapatilhas",
-    "Roupa > Basquetebol > T-Shirts"
+    "Roupa > Basquetebol > Calções",
+    "Roupa > Basquetebol > Casacos",
+    "Roupa > Basquetebol > Calças",
+    "Acessórios > Basquetebol > Bolas"
   ],
   "Roupa > Lifestyle > T-Shirts": [
     "Acessórios > Bonés",
     "Calçado > Lifestyle > Sapatilhas",
     "Calçado > Sapatilhas",
     "Roupa > Calções",
-    "Roupa > Lifestyle > Calções"
+    "Roupa > Lifestyle > Calções",
+    "Roupa > Lifestyle > T-Shirts",
+    "Roupa > Calças",
+    "Acessórios > Relógios",
+    "Roupa > Calças de Ganga",
+    "Roupa > Polos",
+    "Roupa > Camisolas",
+    "Roupa > Camisolas de Capuz"
   ],
   "Calçado > Running > Sapatilhas": [
     "Acessórios > Running > Meias",
     "Roupa > Running > Calções",
     "Roupa > Running > T-Shirts",
     "Roupa > Trail > Calções",
-    "Roupa > Trail > T-Shirts"
+    "Roupa > Trail > T-Shirts",
+    "Calçado > Running > Sapatilhas",
+    "Roupa > Running > Camisolas",
+    "Roupa > Running > Leggins",
+    "Roupa > Running > Camisolas de Alças"
   ],
   "Acessórios > Cintos": [
+    "Acessórios > Carteira",
     "Acessórios > Porta-Moedas",
-    "Roupa > Calças",
-    "Roupa > Calças de Ganga",
+    "Acessórios > Relógios",
     "Roupa > Calções",
-    "Roupa > Lifestyle > Calças",
-    "Roupa > Lifestyle > Calças de Ganga"
+    "Acessórios > Cintos",
+    "Roupa > Calças",
+    "Roupa > Calças de Ganga"
   ],
   "Acessórios > Meias": [
+    "Acessórios > Limpeza de Calçado",
     "Acessórios > Boxers",
-    "Calçado > Lifestyle > Sapatilhas",
-    "Calçado > Sapatilhas",
     "Roupa > Calças",
     "Roupa > Calças de Ganga",
+    "Acessórios > Meias",
+    "Roupa > T-shirts",
+    "Calçado > Lifestyle > Sapatilhas",
+    "Calçado > Sapatilhas",
     "Roupa > Calções",
     "Roupa > Lifestyle > Calções"
   ],
   "Roupa > Futebol > Calções": [
-    "Acessórios > Futebol > Caneleiras",
-    "Acessórios > Futebol > Meias",
+    "Acessórios > Futebol > Saco",
+    "Acessórios > Futebol > Caneleiras ",
     "Calçado > Futebol > Chuteiras",
+    "Acessórios > Futebol > Meias",
+    "Roupa > Futebol > Calções",
+    "Roupa > Futebol > Calças",
+    "Roupa > Futebol > T-Shirts",
     "Calçado > Futebol > Sapatilhas",
-    "Roupa > Futebol > T-Shirts"
+    "Calçado > Futebol > Chuteiras"
   ],
   "Roupa > Lifestyle > Calças": [
-    "Acessórios > Bolsas de Cintura",
-    "Acessórios > Boxers",
     "Acessórios > Cintos",
+    "Acessórios > Boxers",
+    "Acessórios > Bolsas de Cintura",
     "Calçado > Sapatilhas",
     "Roupa > Camisolas",
     "Roupa > Camisolas com Capuz",
-    "Roupa > Lifestyle > T-Shirts"
+    "Roupa > Lifestyle > T-Shirts",
+    "Roupa > Calças",
+    "Roupa > Calças de Ganga",
+    "Roupa > Casacos",
+    "Roupa  > T-Shirts"
   ],
   "Roupa > Running > Camisolas": [
     "Calçado > Running > Sapatilhas",
-    "Roupa > Fitness & Training > Sutiã Desportivo",
-    "Roupa > Running > Calções",
     "Roupa > Running > T-Shirts",
+    "Roupa > Fitness & Training > Sutiã Desportivo",
+    "Roupa > Running > T-Shirts",
+    "Roupa > Running > Calções",
     "Roupa > Trail > Calções",
-    "Roupa > Trail > T-Shirts"
+    "Roupa > Trail > T-Shirts",
+    "Roupa > Running > Camisolas",
+    "Roupa > Fitness & Training > Camisolas",
+    "Acessórios > Running > Meias"
   ],
   "Calçado > Fitness & Training > Sapatilhas": [
-    "Acessórios > Fitness & Training > Bolsas",
+    "Roupa > Fitness & Training > Leggins",
     "Acessórios > Fitness & Training > Meias",
-    "Acessórios > Fitness & Training > Outros Acessórios",
     "Acessórios > Fitness & Training > Sacos",
+    "Acessórios > Fitness & Training > Outros Acessórios",
+    "Acessórios > Fitness & Training > Garrafas",
+    "Acessórios > Fitness & Training > Bolsas",
     "Roupa > Fitness & Training > Calções",
-    "Roupa > Fitness & Training > T-Shirts"
+    "Roupa > Fitness & Training > T-Shirts",
+    "Roupa > Fitness & Training > Sutiã Desportivo",
+    "Roupa > Fitness & Training > Camisolas de Alças",
+    "Roupa > Fitness & Training > Casacos",
+    "Calçado > Fitness & Training > Sapatilhas"
   ],
   "Calçado > Padel & Ténis > Sapatilhas": [
     "Acessórios > Padel & Ténis > Bolas",
-    "Acessórios > Padel & Ténis > Fitas",
+    "Acessórios > Padel & Ténis > Raquetes",
+    "Acessórios > Padel & Ténis > Pulsos",
     "Acessórios > Padel & Ténis > Overgrips",
-    "Acessórios > Padel & Ténis > Pulsos"
+    "Acessórios > Padel & Ténis > Fitas",
+    "Calçado > Padel & Ténis > Sapatilhas"
   ],
   "Roupa > Polos": [
-    "Calçado > Botas",
-    "Calçado > Lifestyle > Sapatilhas",
+    "Acessórios >  Bonés ",
+    "Acessórios >  Óculos de sol ",
+    "Acessórios >  Colares",
+    "Acessórios >  Porta cartões",
+    "Acessórios >  Necessaires",
     "Calçado > Sapatilhas",
+    "Calçado > Botas",
     "Calçado > Sapatos",
+    "Roupa > Camisa",
+    "Roupa > Polos",
     "Roupa > Calças",
     "Roupa > Calças de Ganga",
+    "Roupa > T-shirts",
+    "Calçado > Lifestyle > Sapatilhas",
     "Roupa > Lifestyle > Calças",
     "Roupa > Lifestyle > Calças de Ganga"
   ],
   "Calçado > Lifestyle > Sapatilhas": [
+    "Acessórios > Palmilhas",
+    "Acessórios > Limpeza de Calçado",
     "Acessórios > Cordões",
+    "Calçado > Lifestyle > Sapatilhas",
     "Acessórios > Meias",
-    "Acessórios > Palmilhas"
+    "Roupa > Calças",
+    "Roupa > Calças de Ganga",
+    "Roupa > T-shirts",
+    "Roupa > Polos",
+    "Roupa > Camisolas",
+    "Roupa > Camisolas de Capuz"
   ],
   "Roupa > Running > T-Shirts": [
+    "Calçado > Trail > Sapatilhas",
+    "Roupa > Trail > T-Shirts",
     "Calçado > Running > Sapatilhas",
     "Calçado > Trail > Sapatilhas",
     "Roupa > Running > Calções",
     "Roupa > Trail > Calções",
-    "Roupa > Trail > T-Shirts"
+    "Roupa > Running > T-Shirts",
+    "Roupa > Running > Camisolas de Alças",
+    "Roupa > Running > Sutiã Desportivo"
   ],
   "Roupa > Futebol > Calças": [
     "Roupa > Futebol > Camisolas",
     "Roupa > Futebol > Camisolas com Capuz",
     "Roupa > Futebol > Camisolas de Clubes",
     "Roupa > Futebol > Camisolas de Seleções",
-    "Roupa > Futebol > T-Shirts"
+    "Roupa > Futebol > T-Shirts",
+    "Roupa > Futebol > Calças",
+    "Roupa > Futebol > Calções",
+    "Calçado > Futebol  > Sapatilhas",
+    "Calçado > Futebol  > Chuteiras",
+    "Roupa > Futebol > Fatos de Treino",
+    "Roupa > Futebol > Casacos"
   ],
   "Roupa > Lifestyle > Calções": [
     "Acessórios > Cintos",
     "Calçado > Lifestyle > Sapatilhas",
-    "Calçado > Sapatilhas"
+    "Calçado > Sapatilhas",
+    "Roupa > Lifestyle > Calções",
+    "Roupa > Calças",
+    "Roupa > Calças de Ganga",
+    "Roupa > T-shirts",
+    "Roupa > Camisolas",
+    "Roupa > Casacos"
   ],
   "Roupa > Vestidos": [
+    "calçado > sapatilhas",
+    "Roupa > T-shirts",
+    "calçado > sandálias",
+    "calçado > chinelos",
+    "Roupa > Saias",
+    "Roupa > Vestidos",
     "Acessórios > Anéis",
     "Acessórios > Brincos",
     "Acessórios > Carteiras",
     "Acessórios > Colares",
+    "Roupa > Calças de Ganga",
+    "Roupa > Calças ",
     "Acessórios > Malas",
     "Acessórios > Medalhões",
-    "Acessórios > Meias"
+    "Acessórios > Meias",
+    "Roupa > Tops"
   ],
   "Calçado > Basquetebol > Sapatilhas": [
+    "Calçado > Basquetebol > Sapatilhas",
     "Acessórios > Basquetebol > Bolas",
     "Roupa > Basquetebol > Calções",
-    "Roupa > Basquetebol > T-Shirts"
+    "Roupa > Basquetebol > T-Shirts",
+    "Roupa > Basquetebol > Camisola de Alças"
   ]
 }
