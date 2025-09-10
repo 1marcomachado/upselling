@@ -128,7 +128,7 @@ for entry in root.findall('atom:entry', ns):
     color = entry.find('g:color', ns).text.strip() if entry.find('g:color', ns) is not None else ""
     age_group_raw = entry.find('g:age_group', ns).text if entry.find('g:age_group', ns) is not None else ""
     age_group = (age_group_raw or "").strip()
-    modalidade = entry.find('g:modalidade', ns).text.strip() if entry.find('g:modalidade', ns) is not None else ""
+    modalidade = entry.find('g:modalidade', ns).text if entry.find('g:modalidade', ns) is not None else ""
 
     # Novidade — usar só release_date
     release_txt = entry.find('g:release_date', ns).text if entry.find('g:release_date', ns) is not None else ""
