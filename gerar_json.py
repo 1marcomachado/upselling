@@ -12,10 +12,12 @@ import torch
 import torchvision.models as models
 import torchvision.transforms as transforms
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import base64
 from dotenv import load_dotenv
 from collections import defaultdict
+import math
+import re
 
 # =========================
 # ⚙️ Parâmetros ajustáveis
@@ -23,9 +25,20 @@ from collections import defaultdict
 TOTAL_LIMIT = 30        # nº máximo de sugestões por produto
 DIVERSITY_RATIO = 0.20  # fração mínima dedicada a diversidade (≈1 por categoria até 20% do total)
 SOFT_CAP_RATIO = 0.40   # teto "soft" por categoria (40% do total)
-# =========================
 
-# 🔐 Carregar variáveis de ambiente
+# =========================
+# ⚖️ Pesos para o ranking (sem +vendidos)
+# =========================
+W_STOCK = 0.12      # 12%
+W_NEW   = 0.39      # 39%
+W_SIM   = max(0.0, 1.0 - (W_STOCK + W_NEW))  # resto vai para similaridade
+
+NOVELTY_HALF_LIFE_DAYS = 180
+DEFAULT_NEWNESS_WHEN_MISSING = 0.0
+
+# =========================
+# 🔐 Env / Endpoints
+# =========================
 load_dotenv()
 token = os.getenv("GITHUB_TOKEN")
 repo = os.getenv("GITHUB_REPO")
@@ -46,7 +59,16 @@ session.headers.update({"User-Agent": "Mozilla/5.0"})
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
 session.mount("https://", HTTPAdapter(max_retries=retries))
 
+# Utils
+def _clamp01(x):
+    try:
+        return 0.0 if x is None else max(0.0, min(1.0, float(x)))
+    except Exception:
+        return 0.0
+
+# =========================
 # 🔽 Descarregar XML
+# =========================
 print("🔽 A descarregar XML...")
 r = session.get(xml_url, timeout=30)
 r.raise_for_status()
@@ -55,7 +77,35 @@ tree = ET.ElementTree(ET.fromstring(xml_content))
 root = tree.getroot()
 ns = {'g': 'http://base.google.com/ns/1.0', 'atom': 'http://www.w3.org/2005/Atom'}
 
-# 📦 Parse produtos (sem title “genérico”)
+def _sanitize_date_raw(s: str) -> str:
+    s = (s or "").strip()
+    bads = {"0000-00-00", "0000/00/00", "0000-00-00T00:00:00", "0000-00-00 00:00:00"}
+    if not s or s in bads or s.startswith("0000-00-00"):
+        return ""
+    return s
+
+def _parse_date_guess(s: str):
+    if not s:
+        return None
+    s = s.strip().replace("Z", "+00:00")
+    if re.match(r"^0{4}[-/ ]?0{2}[-/ ]?0{2}", s):
+        return None
+    for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S.%f%z",
+                "%Y-%m-%d %H:%M:%S%z", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(s, fmt)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            if dt.year < 1970 or dt > datetime.now(timezone.utc):
+                return None
+            return dt
+        except Exception:
+            continue
+    return None
+
+# =========================
+# 📦 Parse produtos
+# =========================
 produtos = []
 for entry in root.findall('atom:entry', ns):
     id_ = entry.find('g:id', ns).text if entry.find('g:id', ns) is not None else ""
@@ -74,6 +124,16 @@ for entry in root.findall('atom:entry', ns):
     size = entry.find('g:size', ns).text if entry.find('g:size', ns) is not None else ""
     availability = entry.find('g:availability', ns).text if entry.find('g:availability', ns) is not None else ""
 
+    # Novos campos
+    color = entry.find('g:color', ns).text.strip() if entry.find('g:color', ns) is not None else ""
+    age_group_raw = entry.find('g:age_group', ns).text if entry.find('g:age_group', ns) is not None else ""
+    age_group = (age_group_raw or "").strip()
+    modalidade = entry.find('g:modalidade', ns).text.strip() if entry.find('g:modalidade', ns) is not None else ""
+
+    # Novidade — usar só release_date
+    release_txt = entry.find('g:release_date', ns).text if entry.find('g:release_date', ns) is not None else ""
+    release_txt = _sanitize_date_raw(release_txt)
+
     produtos.append({
         "id": id_,
         "mpn": mpn,
@@ -89,10 +149,16 @@ for entry in root.findall('atom:entry', ns):
         "gender": gender,
         "pack": pack,
         "size": size,
-        "availability": availability
+        "availability": availability,
+        "color": color,
+        "age_group": age_group,
+        "modalidade": modalidade,
+        "updated_raw": release_txt  # só release_date
     })
 
-# 🧠 Modelo ResNet50
+# =========================
+# 🧠 ResNet50 para embeddings
+# =========================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
 model.eval().to(device)
@@ -103,7 +169,6 @@ transform = transforms.Compose([
                          std=[0.229, 0.224, 0.225])
 ])
 
-# 📸 Função de embedding de imagem
 def get_image_embedding(img_url, image_path):
     try:
         if os.path.exists(image_path):
@@ -124,7 +189,9 @@ def get_image_embedding(img_url, image_path):
         print(f"⚠️ Erro ao processar imagem {img_url}: {e}")
         return None
 
-# Helpers para categorias / exceções
+# =========================
+# Helpers categorias / regras
+# =========================
 def _split_cat(cat):
     return [c.strip() for c in cat.split(">")] if cat else []
 
@@ -135,7 +202,38 @@ def _first_level(cat):
 def _is_accessories(cat_str):
     return _first_level(cat_str) == "acessórios" if cat_str else False
 
+def _norm_age_group(s: str) -> str:
+    s = (s or "").strip().lower()
+    if "adulto" in s and "crian" in s:
+        return "adulto e criança"
+    if "adulto" in s:
+        return "adulto"
+    if "crian" in s:
+        return "criança"
+    return ""
+
+def _age_compat(base_age: str, cand_age: str) -> bool:
+    b = _norm_age_group(base_age)
+    c = _norm_age_group(cand_age)
+    if not b or not c:
+        return False
+    if b == c:
+        return True
+    return b == "adulto e criança" or c == "adulto e criança"
+
+def _modalidade_compat(base_mod: str, cand_mod: str) -> bool:
+    bm = (base_mod or "").strip().lower()
+    cm = (cand_mod or "").strip().lower()
+    if bm and cm:
+        return bm == cm
+    return True
+
+def _is_instock(av):
+    return ((av or "").strip().lower() == "in stock")
+
+# =========================
 # 🧠 Preparar embeddings com cache
+# =========================
 print("🧠 A preparar embeddings com cache...")
 embeddings_file = "embeddings.npy"
 mpns_file = "mpns_embeddings.json"
@@ -151,11 +249,9 @@ else:
 mpn_to_embedding = {}
 mpn_to_produto = {}
 
-# Produtos com embeddings existentes
 for i, mpn in enumerate(mpns_existentes):
     mpn_to_embedding[mpn] = embeddings[i]
 
-# Novos produtos
 novos_embeddings = []
 mpns_adicionados = set(mpns_existentes)
 
@@ -174,7 +270,6 @@ for p in produtos:
         mpn_to_produto[mpn] = p
         mpns_adicionados.add(mpn)
 
-# Atualizar embeddings
 if novos_embeddings:
     novos_embeddings = np.array(novos_embeddings)
     embeddings = np.vstack((embeddings, novos_embeddings)) if len(embeddings) else novos_embeddings
@@ -182,7 +277,6 @@ if novos_embeddings:
     with open(mpns_file, "w", encoding="utf-8") as f:
         json.dump(list(mpns_adicionados), f, ensure_ascii=False, indent=2)
 
-# Reconstruir produtos válidos com embeddings
 produtos_validos = []
 for p in produtos:
     mpn = p["mpn"]
@@ -192,13 +286,56 @@ for p in produtos:
 
 print(f"✅ Produtos com embeddings: {len(produtos_validos)}")
 
-# 🔎 Similaridade por mpn
+# =========================
+# 📊 Sinais: STOCK / NOVIDADE
+# =========================
+mpn_stock_ratio = defaultdict(float)
+mpn_var_counts  = defaultdict(int)
+mpn_var_instk   = defaultdict(int)
+
+for p in produtos_validos:
+    mpn = p["mpn"]
+    mpn_var_counts[mpn] += 1
+    if _is_instock(p.get("availability")):
+        mpn_var_instk[mpn] += 1
+
+for mpn in mpn_var_counts:
+    total = mpn_var_counts[mpn]
+    instk = mpn_var_instk[mpn]
+    mpn_stock_ratio[mpn] = (instk / total) if total > 0 else 0.0
+
+now = datetime.now(timezone.utc)
+mpn_best_dt = {}
+for p in produtos_validos:
+    mpn = p["mpn"]
+    dt = _parse_date_guess(p.get("updated_raw", ""))
+    if dt and (mpn not in mpn_best_dt or dt > mpn_best_dt[mpn]):
+        mpn_best_dt[mpn] = dt
+
+mpn_novidade_score = defaultdict(float)
+for mpn, dt in mpn_best_dt.items():
+    days = max(0.0, (now - dt).total_seconds() / 86400.0)
+    freshness = max(0.0, 1.0 - (days / NOVELTY_HALF_LIFE_DAYS))
+    mpn_novidade_score[mpn] = freshness
+
+# =========================
+# 📊 Similaridade visual
+# =========================
 print("📊 A calcular similaridades...")
 mpn_list = list(mpn_to_embedding.keys())
 mpn_embeddings = np.array([mpn_to_embedding[m] for m in mpn_list])
 similarity_matrix = cosine_similarity(mpn_embeddings)
 
-# 🔄 Construir sugestões (prioriza complementares; Acessórios sem brand; mantém sempre site+gender)
+def _combined_score(i_idx: int, j_idx: int) -> float:
+    sim = float(similarity_matrix[i_idx][j_idx])
+    cand_mpn = mpn_list[j_idx]
+    stock = mpn_stock_ratio.get(cand_mpn, 0.0)
+    newn  = mpn_novidade_score.get(cand_mpn, DEFAULT_NEWNESS_WHEN_MISSING)
+    return float(W_SIM * _clamp01(sim) + W_STOCK * _clamp01(stock) + W_NEW * _clamp01(newn))
+
+# =========================
+# 🔄 Construir sugestões
+# =========================
 sugestoes_dict = {}
 produtos_sem_sugestoes = []
 
@@ -210,23 +347,17 @@ for p in produtos_validos:
     i = mpn_list.index(base_mpn)
 
     site_base   = (p.get("site") or "").strip()
-    brand_base  = (p.get("brand") or "").strip()
     gender_base = (p.get("gender") or "").strip()
     cat_full    = (p.get("category") or "").strip()
 
-    # 1) categorias complementares (ordem de preferência)
     categorias_validas = None
     if cat_full in categorias_complementares:
         categorias_validas = [c.strip() for c in categorias_complementares[cat_full] if c and c.strip()]
 
-    acessorios_em_validas = False
-    if categorias_validas:
-        acessorios_em_validas = any(_is_accessories(c) for c in categorias_validas)
-
-    # 2) construir pools (sempre MESMO site + MESMO gender)
-    cand_preferidos = []  # dentro das complementares
-    cand_fallback  = []   # fora das complementares
-
+    # ——————————————————
+    # 1) Universo elegível (filtros obrigatórios)
+    # ——————————————————
+    cand_all = []
     for j, mpn_cand in enumerate(mpn_list):
         if mpn_cand == base_mpn:
             continue
@@ -236,55 +367,38 @@ for p in produtos_validos:
             continue
         if (cand.get("gender") or "").strip() != gender_base:
             continue
+        if not _age_compat(p.get("age_group"), cand.get("age_group")):
+            continue
+        if not _modalidade_compat(p.get("modalidade"), cand.get("modalidade")):
+            continue
 
-        cand_cat   = (cand.get("category") or "").strip()
-        cand_brand = (cand.get("brand") or "").strip()
+        cand_all.append(j)
 
+    if not cand_all:
+        produtos_sem_sugestoes.append({
+            "id": p["id"],
+            "mpn": p["mpn"],
+            "title": {"pt": p["title_pt"], "es": p["title_es"], "en": p["title_en"]},
+            "category": p["category"], "brand": p["brand"], "site": p["site"],
+            "gender": p["gender"], "pack": p["pack"],
+            "age_group": p.get("age_group", ""), "modalidade": p.get("modalidade", ""),
+            "motivo": "Sem candidatos após filtros obrigatórios (site/gender/age_group/modalidade)"
+        })
+        continue
+
+    # ——————————————————
+    # 2) Partição: complementares vs fallback
+    # ——————————————————
+    cand_preferidos, cand_fallback = [], []
+    for j in cand_all:
+        cand = mpn_to_produto[mpn_list[j]]
+        cand_cat = (cand.get("category") or "").strip()
         in_valid = bool(categorias_validas) and (cand_cat in categorias_validas)
-        is_acess = _is_accessories(cand_cat)
-
-        # regra brand:
-        # - se categoria é Acessórios e está nas complementares → brand NÃO é exigida
-        # - nos restantes casos → brand tem de coincidir
-        if in_valid and is_acess:
-            brand_ok = True
-        else:
-            #brand_ok = (cand_brand == brand_base)
-            brand_ok = True
-
-        if not brand_ok:
-            # ainda pode ir para fallback? (mantemos a mesma exceção para Acessórios)
-            if is_acess and acessorios_em_validas:
-                # permitir sem brand também no fallback para manter coerência
-                pass
-            else:
-                continue
-
         if in_valid:
             cand_preferidos.append(j)
         else:
             cand_fallback.append(j)
 
-    total_pool = len(cand_preferidos) + len(cand_fallback)
-    if total_pool == 0:
-        produtos_sem_sugestoes.append({
-            "id": p["id"],
-            "mpn": p["mpn"],
-            "title": {
-                "pt": p["title_pt"],
-                "es": p["title_es"],
-                "en": p["title_en"]
-            },
-            "category": p["category"],
-            "brand": p["brand"],
-            "site": p["site"],
-            "gender": p["gender"],
-            "pack": p["pack"],
-            "motivo": "Sem candidatos (site/gender/brand + regra Acessórios)"
-        })
-        continue
-
-    # 3) ranking + diversidade
     diversity_quota = max(1, int(TOTAL_LIMIT * DIVERSITY_RATIO))
     max_per_cat     = max(2, int(TOTAL_LIMIT * SOFT_CAP_RATIO))
 
@@ -293,103 +407,88 @@ for p in produtos_validos:
         for j in indices:
             cand = mpn_to_produto[mpn_list[j]]
             cat  = (cand.get("category") or "").strip()
-            score = similarity_matrix[i][j]
+            score = _combined_score(i, j)
             cat_to_candidates[cat].append((j, score))
         for cat in cat_to_candidates:
             cat_to_candidates[cat].sort(key=lambda x: x[1], reverse=True)
-
-        cats_presentes = list(cat_to_candidates.keys())
+        cats = list(cat_to_candidates.keys())
         if categorias_validas:
             preferidas = [c for c in categorias_validas if c in cat_to_candidates]
-            restantes  = [c for c in cats_presentes if c not in set(preferidas)]
+            restantes  = [c for c in cats if c not in set(preferidas)]
             restantes.sort(key=lambda c: cat_to_candidates[c][0][1], reverse=True)
             cats_ordenadas = preferidas + restantes
         else:
-            cats_ordenadas = sorted(cats_presentes, key=lambda c: cat_to_candidates[c][0][1], reverse=True)
+            cats_ordenadas = sorted(cats, key=lambda c: cat_to_candidates[c][0][1], reverse=True)
         return cats_ordenadas, cat_to_candidates
 
-    # Fase 1: só complementares
-    sugestoes_indices = []
-    usados = set()
+    sugestoes_indices, usados = [], set()
     cat_counts = defaultdict(int)
 
+    # FASE A: Complementares primeiro
     cats_pref, map_pref = rank_by_cat(cand_preferidos)
 
-    # diversidade mínima dentro das complementares
+    # A1) diversidade mínima entre complementares
     for cat in cats_pref:
         if len(sugestoes_indices) >= diversity_quota:
             break
         top_idx, _ = map_pref[cat][0]
         if top_idx not in usados:
-            sugestoes_indices.append(top_idx)
-            usados.add(top_idx)
-            cat_counts[cat] += 1
+            sugestoes_indices.append(top_idx); usados.add(top_idx); cat_counts[cat] += 1
 
-    # pool global preferidos (prioridade por categoria complementar e score)
-    def is_cat_valid(c):
-        return bool(categorias_validas) and (c in categorias_validas)
-
-    pool_pref_global = sorted(
-        [j for j in cand_preferidos if j not in usados],
-        key=lambda x: (0 if is_cat_valid((mpn_to_produto[mpn_list[x]]["category"] or "").strip()) else 1,
-                       -similarity_matrix[i][x])
-    )
-
+    # A2) preencher até TOTAL_LIMIT com complementares (teto por categoria)
+    pool_pref_global = sorted([j for j in cand_preferidos if j not in usados],
+                              key=lambda x: -_combined_score(i, x))
     for j in pool_pref_global:
-        if len(sugestoes_indices) >= TOTAL_LIMIT:
-            break
+        if len(sugestoes_indices) >= TOTAL_LIMIT: break
         cat = (mpn_to_produto[mpn_list[j]]["category"] or "").strip()
         if cat_counts[cat] < max_per_cat:
-            sugestoes_indices.append(j)
-            usados.add(j)
-            cat_counts[cat] += 1
+            sugestoes_indices.append(j); usados.add(j); cat_counts[cat] += 1
 
-    # Fase 2: fallback (fora das complementares)
+    # A3) relaxar teto dentro das complementares se ainda faltar
+    if len(sugestoes_indices) < TOTAL_LIMIT:
+        for j in pool_pref_global:
+            if len(sugestoes_indices) >= TOTAL_LIMIT: break
+            if j in usados: continue
+            sugestoes_indices.append(j); usados.add(j)
+
+    # FASE B: Fallback (só se ainda faltar)
     if len(sugestoes_indices) < TOTAL_LIMIT and cand_fallback:
         cats_fb, map_fb = rank_by_cat(cand_fallback)
 
-        # completar diversidade mínima se necessário
+        # B1) completar diversidade mínima se necessário
         if len(sugestoes_indices) < diversity_quota:
             for cat in cats_fb:
-                if len(sugestoes_indices) >= diversity_quota:
-                    break
+                if len(sugestoes_indices) >= diversity_quota: break
                 top_idx, _ = map_fb[cat][0]
                 if top_idx not in usados:
-                    sugestoes_indices.append(top_idx)
-                    usados.add(top_idx)
-                    cat_counts[cat] += 1
+                    sugestoes_indices.append(top_idx); usados.add(top_idx); cat_counts[cat] += 1
 
-        pool_fb_global = sorted(
-            [j for j in cand_fallback if j not in usados],
-            key=lambda x: -similarity_matrix[i][x]
-        )
-
+        # B2) preencher até TOTAL_LIMIT com fallback (teto por categoria)
+        pool_fb_global = sorted([j for j in cand_fallback if j not in usados],
+                                key=lambda x: -_combined_score(i, x))
         for j in pool_fb_global:
-            if len(sugestoes_indices) >= TOTAL_LIMIT:
-                break
+            if len(sugestoes_indices) >= TOTAL_LIMIT: break
             cat = (mpn_to_produto[mpn_list[j]]["category"] or "").strip()
             if cat_counts[cat] < max_per_cat:
-                sugestoes_indices.append(j)
-                usados.add(j)
-                cat_counts[cat] += 1
+                sugestoes_indices.append(j); usados.add(j); cat_counts[cat] += 1
 
-        # relaxar teto por categoria se ainda faltar
+        # B3) relaxar teto no fallback se ainda faltar
         if len(sugestoes_indices) < TOTAL_LIMIT:
-            restantes_relax = [j for j in pool_fb_global if j not in usados]
-            for j in restantes_relax:
-                if len(sugestoes_indices) >= TOTAL_LIMIT:
-                    break
-                sugestoes_indices.append(j)
-                usados.add(j)
+            for j in pool_fb_global:
+                if len(sugestoes_indices) >= TOTAL_LIMIT: break
+                if j in usados: continue
+                sugestoes_indices.append(j); usados.add(j)
 
-    # limitar ao universo existente
-    all_candidates = set(cand_preferidos) | set(cand_fallback)
+    # cortar ao universo e ao TOTAL_LIMIT
+    all_candidates = set(cand_all)
     sugestoes_indices = [idx for idx in sugestoes_indices if idx in all_candidates][:min(TOTAL_LIMIT, len(all_candidates))]
 
     sugestoes = [mpn_list[idx] for idx in sugestoes_indices]
     sugestoes_dict[p["id"]] = sugestoes
 
+# =========================
 # 👕 Agrupar variantes por mpn
+# =========================
 mpn_variantes = defaultdict(list)
 for p in produtos_validos:
     mpn_variantes[p["mpn"]].append({
@@ -398,12 +497,11 @@ for p in produtos_validos:
         "availability": p["availability"]
     })
 
-# 📝 Gerar JSON final (mostrar todas as variantes, mas só incluir produtos com >=1 variante em stock)
+# =========================
+# 📝 JSON final (igual ao último, sem 'bestseller')
+# =========================
 saida_json = []
 vistos = set()
-
-def _is_instock(av):
-    return ((av or "").strip().lower() == "in stock")
 
 for produto in produtos_validos:
     mpn = produto["mpn"]
@@ -412,14 +510,10 @@ for produto in produtos_validos:
     vistos.add(mpn)
 
     variantes_all = mpn_variantes.get(mpn, [])
-
-    # 🔍 verifica se há pelo menos uma variante com stock
     variantes_instock = [v for v in variantes_all if _is_instock(v.get("availability"))]
     if not variantes_instock:
-        # ❌ sem stock em qualquer variante → não incluir no JSON final
         continue
 
-    # ✅ escolher id_base de uma variante com stock
     id_base = variantes_instock[0]["id"]
 
     saida_json.append({
@@ -437,14 +531,20 @@ for produto in produtos_validos:
         "brand": produto["brand"],
         "price": produto.get("price", ""),
         "sale_price": produto.get("sale_price", ""),
-        # ✅ expor TODAS as variantes (com e sem stock)
+        "color": produto.get("color", ""),
+        "age_group": _norm_age_group(produto.get("age_group", "")),
+        "modalidade": produto.get("modalidade", ""),
+        "signals": {
+            "stock_ratio": round(mpn_stock_ratio.get(mpn, 0.0), 4),
+            "novidade": round(mpn_novidade_score.get(mpn, 0.0), 4)
+        },
         "variantes": variantes_all,
-        # manter lookup de sugestões pelo id_base (em stock)
         "sugestoes": sugestoes_dict.get(id_base, sugestoes_dict.get(produto["id"], []))
     })
 
 saida_json_final = {
     "gerado_em": datetime.utcnow().isoformat(),
+    "pesos": {"sim": W_SIM, "stock": W_STOCK, "novidade": W_NEW},
     "produtos": saida_json
 }
 
@@ -457,7 +557,9 @@ with open("produtos_sem_sugestoes.json", "w", encoding="utf-8") as f:
 print("✅ JSON final criado: upselling_final.json")
 print("📁 Log criado: produtos_sem_sugestoes.json")
 
+# =========================
 # 📤 Upload para GitHub
+# =========================
 headers = {
     "Authorization": f"token {token}",
     "Accept": "application/vnd.github.v3+json"
