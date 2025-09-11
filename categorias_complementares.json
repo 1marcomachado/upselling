@@ -16,9 +16,6 @@
   "Roupa > Camisolas com Capuz": [
     "Roupa > Lifestyle > T-Shirts",
     "Roupa > Lifestyle > Casacos",
-    "Acessórios > Lifestyle > Bonés",
-    "Acessórios > Lifestyle > Chapéus",
-    "Acessórios > Lifestyle > Bolsa Tiracolo",
     "Roupa > Lifestyle > Calças",
     "Roupa > Lifestyle > Calças de Ganga",
     "Roupa > Calças",
@@ -26,23 +23,18 @@
     "Roupa > Camisolas com Capuz"
   ],
   "Roupa > T-Shirts": [
-    "Acessórios > Bonés",
     "Calçado > Lifestyle > Sapatilhas",
     "Calçado > Sapatilhas",
-    "Roupa > Calções",
-    "Roupa > Lifestyle > Calções",
     "Roupa > T-Shirts"
   ],
   "Roupa > Futebol > Casacos de Seleções": [
     "Roupa > Futebol > Camisolas de Seleções",
-    "Roupa > Futebol > Calções",
     "Acessórios > Futebol ",
     "Roupa > Calças",
     "Roupa > Futebol > Casacos de Seleções",
     "Roupa > Futebol > Calças"
   ],
   "Roupa > Futebol > Camisolas de Seleções": [
-    "Roupa > Calças",
     "Roupa > Futebol > Camisolas de Seleções",
     "Acessórios > Futebol "
   ],
@@ -68,15 +60,8 @@
     "Roupa > Fitness & Training > Sutiã Desportivo"
   ],
   "Acessórios > Mochilas": [
-    "Acessórios > Canetas",
-    "Acessórios > Cadeados",
-    "Acessórios > Pins",
-    "Acessórios > Livros",
-    "Acessórios > Necessaires",
     "Acessórios > Carteiras",
     "Acessórios > Mochilas",
-    "Acessórios > Porta-Cartões",
-    "Acessórios > Porta-Moedas",
     "Acessórios > Porta-chaves",
     "Acessórios > Estojos"
   ],
@@ -166,7 +151,6 @@
     "Roupa > Natação > Calções de Natação",
     "Calçado > Natação > Toucas",
     "Calçado > Natação > Toucas",
-    "Acessórios > Natação > Toalhas",
     "Calçado > Natação > Barbatanas",
     "Acessórios > Natação > Molas de nariz",
     "Acessórios > Natação > Tampões Ouvidos",
@@ -195,8 +179,6 @@
     "Calçado > Sapatilhas",
     "Roupa > Camisolas com Capuz",
     "Roupa > T-shirts",
-    "Calçado > Sandálias",
-    "Roupa > Tops",
     "Roupa > Saias",
     "Roupa > Saias",
     "Roupa > calças de ganga",
@@ -291,7 +273,6 @@
     "Roupa > Lifestyle > Casacos",
     "Roupa > Lifestyle > Calças",
     "Roupa > Lifestyle > Calças de Ganga",
-    "Acessórios > Chapéus",
     "Roupa > Calças",
     "Roupa > Camisolas"
   ],
@@ -320,7 +301,6 @@
   ],
   "Roupa > Lifestyle > Calças de Ganga": [
     "Calçado > Sapatilhas",
-    "Acessórios > Meias",
     "Acessórios > Cintos",
     "Roupa > Camisolas",
     "Roupa > Camisolas com Capuz",
@@ -333,8 +313,6 @@
   ],
   "Acessórios > Natação > Toucas": [
     "Acessórios > Natação > Óculos de Natação",
-    "Acessórios > Natação > Sprays",
-    "Acessórios > Natação > Toalhas",
     "Roupa > Natação > Fatos de Banho",
     "Roupa > Natação > Fatos de Competição",
     "calçado > Natação > Chinelos",
@@ -377,7 +355,6 @@
     "Acessórios > Cintos",
     "Acessórios > meias",
     "Acessórios > Bonés",
-    "Calçado > Chinelos",
     "Roupa > Camisas",
     "Calçado > Lifestyle > Sapatilhas",
     "Calçado > Sapatilhas",
@@ -423,15 +400,12 @@
   "Roupa > Futebol > Casacos de Clubes": [
     "Roupa > Futebol > Camisolas com Capuz",
     "Roupa > Futebol > Camisolas de Clubes",
-    "Roupa > Futebol > Camisolas de Seleções",
     "Roupa > Futebol > Casacos de Clubes",
     "Roupa > Futebol > Polos",
     "Calçado > Sapatilhas",
     "Roupa > Futebol > Fato de treino"
   ],
   "Roupa > Futebol > T-Shirts": [
-    "Roupa > Futebol > Casacos de Clubes",
-    "Roupa > Futebol > Camisolas de Clubes",
     "Roupa > Futebol > Calções",
     "Acessórios > Futebol > Meias",
     "Roupa > Futebol > T-Shirts",
@@ -443,7 +417,6 @@
     "Roupa > Futebol > Calções de Futebol",
     "Roupa > Futebol > Calças",
     "Calçado > Futebol > Chuteiras",
-    "Acessórios > Futebol > Bonés",
     "Calçado > Futebol > Sapatilhas"
   ],
   "Roupa > Futebol > Camisolas com Capuz": [
@@ -457,7 +430,6 @@
   ],
   "Roupa > Basquetebol > Calças": [
     "Roupa > Basquetebol > Casacos",
-    "Calçado > Sapatilhas",
     "Acessórios > Basquetebol > Bolas",
     "Roupa > Basquetebol > Calças",
     "Roupa > Basquetebol > T-Shirts",
@@ -521,8 +493,6 @@
   ],
   "Roupa > Calças": [
     "Acessórios > Cintos",
-    "Acessórios > Boxers",
-    "Acessórios > Bolsas de Cintura",
     "Calçado > Sapatilhas",
     "Roupa > Calças",
     "Roupa > Camisolas",
@@ -537,7 +507,6 @@
     "Roupa > Fitness & Training > Leggins",
     "Acessórios > Fitness & Training > Garrafas",
     "Roupa > Fitness & Training > Camisolas de Alças",
-    "Acessórios > Fitness & Training >  Bolsas",
     "Roupa > Fitness & Training > Calções",
     "Acessórios  > Fitness & Training > Sacos",
     "Roupa > Fitness & Training > Calças",
@@ -571,7 +540,6 @@
     "Acessórios > Basquetebol > Bolas"
   ],
   "Roupa > Lifestyle > T-Shirts": [
-    "Acessórios > Bonés",
     "Calçado > Lifestyle > Sapatilhas",
     "Calçado > Sapatilhas",
     "Roupa > Calções",
@@ -597,7 +565,6 @@
   ],
   "Acessórios > Cintos": [
     "Acessórios > Carteira",
-    "Acessórios > Porta-Moedas",
     "Acessórios > Relógios",
     "Roupa > Calções",
     "Acessórios > Cintos",
@@ -629,8 +596,6 @@
   ],
   "Roupa > Lifestyle > Calças": [
     "Acessórios > Cintos",
-    "Acessórios > Boxers",
-    "Acessórios > Bolsas de Cintura",
     "Calçado > Sapatilhas",
     "Roupa > Camisolas",
     "Roupa > Camisolas com Capuz",
@@ -675,11 +640,7 @@
     "Calçado > Padel & Ténis > Sapatilhas"
   ],
   "Roupa > Polos": [
-    "Acessórios >  Bonés ",
-    "Acessórios >  Óculos de sol ",
-    "Acessórios >  Colares",
     "Acessórios >  Porta cartões",
-    "Acessórios >  Necessaires",
     "Calçado > Sapatilhas",
     "Calçado > Botas",
     "Calçado > Sapatos",
@@ -719,8 +680,6 @@
   "Roupa > Futebol > Calças": [
     "Roupa > Futebol > Camisolas",
     "Roupa > Futebol > Camisolas com Capuz",
-    "Roupa > Futebol > Camisolas de Clubes",
-    "Roupa > Futebol > Camisolas de Seleções",
     "Roupa > Futebol > T-Shirts",
     "Roupa > Futebol > Calças",
     "Roupa > Futebol > Calções",
@@ -747,15 +706,10 @@
     "calçado > chinelos",
     "Roupa > Saias",
     "Roupa > Vestidos",
-    "Acessórios > Anéis",
-    "Acessórios > Brincos",
     "Acessórios > Carteiras",
-    "Acessórios > Colares",
     "Roupa > Calças de Ganga",
     "Roupa > Calças ",
     "Acessórios > Malas",
-    "Acessórios > Medalhões",
-    "Acessórios > Meias",
     "Roupa > Tops"
   ],
   "Calçado > Basquetebol > Sapatilhas": [
