@@ -19,6 +19,10 @@ from collections import defaultdict
 import math
 import re
 
+# ===== NOVOS IMPORTS (textura) =====
+from skimage.feature import local_binary_pattern, graycomatrix, graycoprops
+import cv2
+
 # =========================
 # ⚙️ Parâmetros ajustáveis
 # =========================
@@ -33,16 +37,35 @@ W_STOCK = 0.12      # 12%
 W_NEW   = 0.39      # 39%
 W_SIM   = max(0.0, 1.0 - (W_STOCK + W_NEW))  # resto vai para similaridade
 
+# ---- divisão da similaridade entre CNN e textura
+W_SIM_CNN  = 0.70 * W_SIM
+W_SIM_TEX  = 0.30 * W_SIM
+
 NOVELTY_HALF_LIFE_DAYS = 180
 DEFAULT_NEWNESS_WHEN_MISSING = 0.0
+
+# ===== parâmetros de textura =====
+LBP_N_POINTS = 8
+LBP_RADIUS   = 1
+LBP_METHOD   = "uniform"  # ~59 bins
+GLCM_DIST    = [1, 2, 4]
+GLCM_ANG     = [0, np.pi/4, np.pi/2, 3*np.pi/4]
+
+# Flag para ligar/desligar textura via ENV (ex.: TEXTURE_ENABLED=0)
+TEXTURE_ON = os.getenv("TEXTURE_ENABLED", "1") == "1"
 
 # =========================
 # 🔐 Env / Endpoints
 # =========================
-load_dotenv()
-token = os.getenv("GITHUB_TOKEN")
-repo = os.getenv("GITHUB_REPO")
-branch = "main"
+load_dotenv()  # útil em local
+
+# Em Actions, já existem GITHUB_TOKEN e GITHUB_REPOSITORY
+token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
+repo  = os.getenv("GITHUB_REPO") or os.getenv("GITHUB_REPOSITORY")
+branch = os.getenv("GITHUB_REF_NAME", "main")
+if not repo:
+    raise RuntimeError("Repo não definido (esperava GITHUB_REPOSITORY ou GITHUB_REPO).")
+
 filename = "upselling_final.json"
 api_url = f"https://api.github.com/repos/{repo}/contents/{filename}"
 xml_url = "https://www.bzronline.com/extend/catalog_24.xml"
@@ -70,7 +93,7 @@ def _clamp01(x):
 # 🔽 Descarregar XML
 # =========================
 print("🔽 A descarregar XML...")
-r = session.get(xml_url, timeout=30)
+r = session.get(xml_url, timeout=60)
 r.raise_for_status()
 xml_content = r.content
 tree = ET.ElementTree(ET.fromstring(xml_content))
@@ -169,25 +192,69 @@ transform = transforms.Compose([
                          std=[0.229, 0.224, 0.225])
 ])
 
-def get_image_embedding(img_url, image_path):
+# ===== Helpers imagem / textura =====
+def load_pil_image(img_url, image_path):
     try:
         if os.path.exists(image_path):
-            img = Image.open(image_path).convert('RGB')
+            pil = Image.open(image_path).convert('RGB')
         else:
             headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(img_url, headers=headers, timeout=10)
+            response = requests.get(img_url, headers=headers, timeout=20)
             if "image" not in response.headers.get("Content-Type", ""):
                 print(f"❌ Ignorado (não é imagem): {img_url}")
                 return None
-            img = Image.open(BytesIO(response.content)).convert('RGB')
-            img.save(image_path)
-        img = transform(img).unsqueeze(0).to(device)
+            pil = Image.open(BytesIO(response.content)).convert('RGB')
+            pil.save(image_path)
+        # pequena validação
+        if min(pil.size) < 80:
+            print(f"⚠️ Imagem muito pequena, pode prejudicar textura: {image_path}")
+        return pil
+    except Exception as e:
+        print(f"⚠️ Erro ao carregar imagem {img_url}: {e}")
+        return None
+
+def get_cnn_embedding_from_pil(pil):
+    try:
+        img = transform(pil).unsqueeze(0).to(device)
         with torch.no_grad():
             features = model(img)
         return features.cpu().numpy().flatten()
     except Exception as e:
-        print(f"⚠️ Erro ao processar imagem {img_url}: {e}")
+        print(f"⚠️ Erro CNN: {e}")
         return None
+
+def _prep_gray_for_texture(pil_img: Image.Image) -> np.ndarray:
+    # crop central (reduz fundo e bolsas/brancos)
+    w, h = pil_img.size
+    c = int(min(w, h) * 0.8)
+    left = (w - c)//2; top = (h - c)//2
+    pil_c = pil_img.crop((left, top, left+c, top+c))
+
+    # PIL RGB -> OpenCV BGR -> gray + CLAHE
+    img = np.array(pil_c)[:, :, ::-1]
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    gray = clahe.apply(gray)
+    return gray
+
+def _lbp_hist(gray: np.ndarray) -> np.ndarray:
+    lbp = local_binary_pattern(gray, P=LBP_N_POINTS, R=LBP_RADIUS, method=LBP_METHOD)
+    n_bins = int(lbp.max() + 1)
+    hist, _ = np.histogram(lbp.ravel(), bins=n_bins, range=(0, n_bins), density=True)
+    return hist.astype(np.float32)
+
+def _glcm_feats(gray: np.ndarray) -> np.ndarray:
+    q = (gray / 8).astype(np.uint8)  # 0..31
+    glcm = graycomatrix(q, distances=GLCM_DIST, angles=GLCM_ANG, symmetric=True, normed=True)
+    props = ["contrast", "dissimilarity", "homogeneity", "ASM", "energy", "correlation"]
+    vals = [graycoprops(glcm, p).mean() for p in props]
+    return np.array(vals, dtype=np.float32)
+
+def extract_texture_vector(pil_img: Image.Image) -> np.ndarray:
+    g = _prep_gray_for_texture(pil_img)
+    v = np.concatenate([_lbp_hist(g), _glcm_feats(g)], axis=0)  # ~65 dims
+    n = np.linalg.norm(v) + 1e-8
+    return (v / n).astype(np.float32)
 
 # =========================
 # Helpers categorias / regras
@@ -252,24 +319,59 @@ mpn_to_produto = {}
 for i, mpn in enumerate(mpns_existentes):
     mpn_to_embedding[mpn] = embeddings[i]
 
+# ===== cache de TEXTURA =====
+tex_file = "texture_vectors.npy"
+tex_mpns_file = "mpns_texture.json"
+
+if os.path.exists(tex_file) and os.path.exists(tex_mpns_file):
+    texture_vectors = np.load(tex_file)
+    with open(tex_mpns_file, "r", encoding="utf-8") as f:
+        mpns_tex_existentes = json.load(f)
+else:
+    texture_vectors = []
+    mpns_tex_existentes = []
+
+mpn_to_texture = {}
+for i, mpn in enumerate(mpns_tex_existentes):
+    mpn_to_texture[mpn] = texture_vectors[i]
+
+# ===== construir/atualizar caches =====
 novos_embeddings = []
+novas_texturas = []
 mpns_adicionados = set(mpns_existentes)
+mpns_tex_adicionados = set(mpns_tex_existentes)
 
 for p in produtos:
     mpn = p["mpn"]
-    if not mpn or mpn in mpns_adicionados:
+    if not mpn:
         continue
 
     image_filename = f"{mpn}.jpg"
     image_path = os.path.join(image_folder, image_filename)
-    emb = get_image_embedding(p["image_link"], image_path)
+    pil = load_pil_image(p["image_link"], image_path)
+    if pil is None:
+        continue
 
-    if emb is not None:
-        novos_embeddings.append(emb)
-        mpn_to_embedding[mpn] = emb
-        mpn_to_produto[mpn] = p
-        mpns_adicionados.add(mpn)
+    # CNN
+    if mpn not in mpns_adicionados:
+        emb = get_cnn_embedding_from_pil(pil)
+        if emb is not None:
+            novos_embeddings.append(emb)
+            mpn_to_embedding[mpn] = emb
+            mpn_to_produto[mpn] = p
+            mpns_adicionados.add(mpn)
 
+    # TEXTURA
+    if TEXTURE_ON and mpn not in mpns_tex_adicionados:
+        try:
+            tex = extract_texture_vector(pil)
+            novas_texturas.append(tex)
+            mpn_to_texture[mpn] = tex
+            mpns_tex_adicionados.add(mpn)
+        except Exception as e:
+            print(f"⚠️ Erro textura para {mpn}: {e}")
+
+# guardar caches
 if novos_embeddings:
     novos_embeddings = np.array(novos_embeddings)
     embeddings = np.vstack((embeddings, novos_embeddings)) if len(embeddings) else novos_embeddings
@@ -277,6 +379,14 @@ if novos_embeddings:
     with open(mpns_file, "w", encoding="utf-8") as f:
         json.dump(list(mpns_adicionados), f, ensure_ascii=False, indent=2)
 
+if TEXTURE_ON and novas_texturas:
+    novas_texturas = np.array(novas_texturas)
+    texture_vectors = np.vstack((texture_vectors, novas_texturas)) if len(texture_vectors) else novas_texturas
+    np.save(tex_file, texture_vectors)
+    with open(tex_mpns_file, "w", encoding="utf-8") as f:
+        json.dump(list(mpns_tex_adicionados), f, ensure_ascii=False, indent=2)
+
+# filtrar produtos com embeddings CNN
 produtos_validos = []
 for p in produtos:
     mpn = p["mpn"]
@@ -284,7 +394,9 @@ for p in produtos:
         produtos_validos.append(p)
         mpn_to_produto[mpn] = p
 
-print(f"✅ Produtos com embeddings: {len(produtos_validos)}")
+print(f"✅ Produtos com embeddings CNN: {len(produtos_validos)}")
+if TEXTURE_ON:
+    print(f"✅ Vetores de textura disponíveis para: {len(mpn_to_texture)} MPNs")
 
 # =========================
 # 📊 Sinais: STOCK / NOVIDADE
@@ -319,19 +431,40 @@ for mpn, dt in mpn_best_dt.items():
     mpn_novidade_score[mpn] = freshness
 
 # =========================
-# 📊 Similaridade visual
+# 📊 Similaridades (CNN + TEX)
 # =========================
 print("📊 A calcular similaridades...")
 mpn_list = list(mpn_to_embedding.keys())
+
+# CNN
 mpn_embeddings = np.array([mpn_to_embedding[m] for m in mpn_list])
-similarity_matrix = cosine_similarity(mpn_embeddings)
+# L2 norm defensiva
+mpn_embeddings = mpn_embeddings / (np.linalg.norm(mpn_embeddings, axis=1, keepdims=True) + 1e-8)
+similarity_matrix_cnn = cosine_similarity(mpn_embeddings)
+
+# TEX
+if TEXTURE_ON and len(mpn_to_texture) > 0:
+    tex_dim = next(iter(mpn_to_texture.values())).shape[0]
+    tex_matrix = np.zeros((len(mpn_list), tex_dim), dtype=np.float32)
+    for idx, m in enumerate(mpn_list):
+        tex_matrix[idx] = mpn_to_texture.get(m, np.zeros(tex_dim, dtype=np.float32))
+    tex_matrix = tex_matrix / (np.linalg.norm(tex_matrix, axis=1, keepdims=True) + 1e-8)
+    similarity_matrix_tex = cosine_similarity(tex_matrix)
+else:
+    similarity_matrix_tex = None
 
 def _combined_score(i_idx: int, j_idx: int) -> float:
-    sim = float(similarity_matrix[i_idx][j_idx])
+    sim_cnn = float(similarity_matrix_cnn[i_idx][j_idx])
+    sim_tex = 0.0
+    if TEXTURE_ON and similarity_matrix_tex is not None:
+        sim_tex = float(similarity_matrix_tex[i_idx][j_idx])
+
     cand_mpn = mpn_list[j_idx]
     stock = mpn_stock_ratio.get(cand_mpn, 0.0)
     newn  = mpn_novidade_score.get(cand_mpn, DEFAULT_NEWNESS_WHEN_MISSING)
-    return float(W_SIM * _clamp01(sim) + W_STOCK * _clamp01(stock) + W_NEW * _clamp01(newn))
+
+    sim_part = W_SIM_CNN * _clamp01(sim_cnn) + W_SIM_TEX * _clamp01(sim_tex)
+    return float(sim_part + W_STOCK * _clamp01(stock) + W_NEW * _clamp01(newn))
 
 # =========================
 # 🔄 Construir sugestões
@@ -498,7 +631,7 @@ for p in produtos_validos:
     })
 
 # =========================
-# 📝 JSON final (igual ao último, sem 'bestseller')
+# 📝 JSON final (igual ao último, com "texture" opcional)
 # =========================
 saida_json = []
 vistos = set()
@@ -515,6 +648,12 @@ for produto in produtos_validos:
         continue
 
     id_base = variantes_instock[0]["id"]
+
+    # sinal opcional de energia de textura (norma do vetor)
+    if TEXTURE_ON and (mpn in mpn_to_texture):
+        tex_energy = float(np.linalg.norm(mpn_to_texture.get(mpn)))
+    else:
+        tex_energy = 0.0
 
     saida_json.append({
         "id": id_base,
@@ -536,7 +675,8 @@ for produto in produtos_validos:
         "modalidade": produto.get("modalidade", ""),
         "signals": {
             "stock_ratio": round(mpn_stock_ratio.get(mpn, 0.0), 4),
-            "novidade": round(mpn_novidade_score.get(mpn, 0.0), 4)
+            "novidade": round(mpn_novidade_score.get(mpn, 0.0), 4),
+            "texture": round(tex_energy, 4)
         },
         "variantes": variantes_all,
         "sugestoes": sugestoes_dict.get(id_base, sugestoes_dict.get(produto["id"], []))
@@ -544,7 +684,14 @@ for produto in produtos_validos:
 
 saida_json_final = {
     "gerado_em": datetime.utcnow().isoformat(),
-    "pesos": {"sim": W_SIM, "stock": W_STOCK, "novidade": W_NEW},
+    "pesos": {
+        "sim_total": W_SIM,
+        "sim_cnn": W_SIM_CNN,
+        "sim_tex": W_SIM_TEX if TEXTURE_ON else 0.0,
+        "stock": W_STOCK,
+        "novidade": W_NEW
+    },
+    "textura_ativa": TEXTURE_ON,
     "produtos": saida_json
 }
 
@@ -561,12 +708,13 @@ print("📁 Log criado: produtos_sem_sugestoes.json")
 # 📤 Upload para GitHub
 # =========================
 headers = {
-    "Authorization": f"token {token}",
+    # Em Actions, usa "Bearer"; em local também funciona
+    "Authorization": f"Bearer {token}" if token else "",
     "Accept": "application/vnd.github.v3+json"
 }
 
 # JSON principal
-get_resp = requests.get(api_url, headers=headers)
+get_resp = requests.get(api_url, headers=headers, timeout=30)
 sha = get_resp.json().get("sha") if get_resp.status_code == 200 else None
 with open(filename, "rb") as f:
     content = base64.b64encode(f.read()).decode()
@@ -577,12 +725,12 @@ payload = {
 }
 if sha:
     payload["sha"] = sha
-put_resp = requests.put(api_url, headers=headers, json=payload)
+put_resp = requests.put(api_url, headers=headers, json=payload, timeout=60)
 if put_resp.status_code in [200, 201]:
     print("✅ JSON copiado para o GitHub com sucesso.")
 else:
     try:
-        print("❌ Erro ao enviar para o GitHub:", put_resp.json())
+        print("❌ Erro ao enviar para o GitHub:", put_resp.status_code, put_resp.json())
     except Exception:
         print("❌ Erro ao enviar para o GitHub (sem JSON)")
 
@@ -591,7 +739,7 @@ log_filename = "produtos_sem_sugestoes.json"
 log_api_url = f"https://api.github.com/repos/{repo}/contents/{log_filename}"
 with open(log_filename, "rb") as f:
     log_content = base64.b64encode(f.read()).decode()
-log_get_resp = requests.get(log_api_url, headers=headers)
+log_get_resp = requests.get(log_api_url, headers=headers, timeout=30)
 log_sha = log_get_resp.json().get("sha") if log_get_resp.status_code == 200 else None
 log_payload = {
     "message": "Atualizar log de produtos sem sugestões",
@@ -600,11 +748,11 @@ log_payload = {
 }
 if log_sha:
     log_payload["sha"] = log_sha
-log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload)
+log_put_resp = requests.put(log_api_url, headers=headers, json=log_payload, timeout=60)
 if log_put_resp.status_code in [200, 201]:
     print("✅ Log de produtos sem sugestões enviado para o GitHub.")
 else:
     try:
-        print("❌ Erro ao enviar log para o GitHub:", log_put_resp.json())
+        print("❌ Erro ao enviar log para o GitHub:", log_put_resp.status_code, log_put_resp.json())
     except Exception:
         print("❌ Erro ao enviar log para o GitHub (sem JSON)")
